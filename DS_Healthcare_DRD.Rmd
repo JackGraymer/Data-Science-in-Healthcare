@@ -22,7 +22,10 @@ setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
 
 ```{r load ds_drug_related_deaths}
-Data <- read_excel("data/Drug_related_Deaths_2018-2024.xlsx")
+
+# load the relevant part of the Data set, exclude notes starting from row 4374
+Data <- read_excel("data/Drug_related_Deaths_2018-2024.xlsx", n_max = 4374)
+
 
 # Overview for the Data
 head(Data, 10)
@@ -30,6 +33,7 @@ str(Data)
 
 ```
 ```{r Data Explorations}
+
 
 # look into Notes
 unique(Data$Notes)
@@ -67,6 +71,7 @@ set.seed(23)
 Data$Deaths <- ifelse(Data$Deaths == "Suppressed", sample(1:9, sum(Data$Deaths == "Suppressed"), replace = TRUE), Data$Deaths)
 Data$Deaths <- as.numeric(Data$Deaths)
 
+summary(Data)
 
 ```
 ## Including Plots
