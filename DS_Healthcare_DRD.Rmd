@@ -74,9 +74,55 @@ summary(Data)
 
 # Delete all columns that end on Code, they are duplicates of the other columns
 Data <- Data[, !grepl("Code$", names(Data))]
+# Quality of Data from 2024 is not sufficient yet (delete)
+Data <- Data %>% filter(Month < as.yearmon("2024-01-01"))
 
 ```
 ## Including Plots
+
+```{r Drug induced by State, echo=FALSE}
+Data %>%
+  filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes") %>%
+  group_by(Month, `Occurrence State`) %>% 
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%  # Sum of Death per Month and State
+  ggplot(aes(x = Month, y = Total_Deaths, color = `Occurrence State`)) +
+  geom_line()
+```
+
+```{r Drug induced by State Quarterly (smoother), echo=FALSE}
+
+# we don't have to use all the plots, it's just to get some idea of the data and decide what to chose.
+
+Data %>%
+  filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes") %>% 
+  mutate(Quarter = floor_date(as.Date(Month), "quarter")) %>%  # Create a Quarter variable
+  group_by(Quarter, `Occurrence State`) %>%  # Group by Quarter and Occurrence State
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%
+  ggplot(aes(x = Quarter, y = Total_Deaths, color = `Occurrence State`, group = `Occurrence State`)) +  # Color by Occurrence State
+  geom_line() +
+  labs(x = "Quarter", y = "Total Deaths") 
+```
+
+```{r Drug induced by State and Gender, echo=FALSE}
+Data %>%
+  filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes") %>%
+  group_by(Month, `Occurrence State`, Gender) %>%  # Add Gender to the grouping
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%
+  ggplot(aes(x = Month, y = Total_Deaths, linetype = Gender, color = `Occurrence State`, group = interaction(`Occurrence State`, Gender)) ) +  # Differentiate by Gender and Occurrence State
+  geom_line() +
+  labs(linetype = "Gender", color = "Occurrence State")
+```
+
+```{r Oregon Causes of death (logarithmic), echo=FALSE}
+Data %>%
+  filter(`Occurrence State` == "Oregon", 
+         `UCD - Drug/Alcohol Induced` != "Data not shown due to 6 month lag to account for delays in death certificate completion for certain causes of death." ) %>%
+  group_by(Month, `UCD - Drug/Alcohol Induced`) %>% 
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%  # Sum of Death per Month and State
+  ggplot(aes(x = Month, y = Total_Deaths, color = `UCD - Drug/Alcohol Induced`)) +
+  geom_line()+
+  scale_y_log10()
+```
 
 You can also embed plots, for example:
 
