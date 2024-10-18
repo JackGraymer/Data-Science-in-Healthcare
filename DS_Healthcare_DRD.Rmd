@@ -49,9 +49,9 @@ Data$Provisional <- grepl("\\(provisional\\)", Data$Month)
 # Delete " (provisional)" from the Date
 Data$Month <- gsub(" \\(provisional\\)", "", Data$Month)
 
-# Convert into Date Variable
-Data$Month <- as.yearmon(Data$Month, format = "%b., %Y")
-
+# Dates are formated different (with or without dots/ spaces), so we work with Month Code and format it into Date
+Data$`Month Code` <- as.yearmon(Data$`Month Code`, format = "%Y/%m")
+Data$Month <- Data$`Month Code`
 
 # look into Deaths
 Data$Deaths
@@ -67,6 +67,8 @@ set.seed(23)
 Data$Deaths <- ifelse(Data$Deaths == "Suppressed", sample(1:9, sum(Data$Deaths == "Suppressed"), replace = TRUE), Data$Deaths)
 Data$Deaths <- as.numeric(Data$Deaths)
 
+# Delete all columns that end on Code, they are duplicates of the other columns
+Data <- Data[, !grepl("Code$", names(Data))]
 
 ```
 ## Including Plots
