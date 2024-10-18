@@ -2,26 +2,37 @@
 title: "DS Healthcare"
 author: "Cervan, Del Conte, Kunz"
 date: "2024-10-04"
-output: pdf_document
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
 ---
+
+# Summary
+
+This study aims to find out if the new "Ballot measure 110" regulation passed in the US state of Oregon in 2020 has had an impact on the number of drug-related deaths in the state. This measure decriminalized the possession of small amounts of drugs such as fentanyl and methamphetamine, among others. The data set used in this study  contains information on the number of drug-related deaths in Oregon and it´s neighbouring states, California and Washington from 2018 to 2024. The data set contains information on the month and year of the, the number, the state and the type of death.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# Analysis
 
 ```{r libraries, include=FALSE}
 library(readxl)
 library(dplyr)
 library(zoo)
+library(lubridate)
 
 #setting directory
 #setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 getwd()
 ```
 
-```{r load ds_drug_related_deaths}
+## Data loading
+
+```{r load dataset}
 # load the relevant part of the Data set, exclude notes starting from row 4374
 Data <- read_excel("data/Drug_related_Deaths_2018-2024.xlsx", n_max = 4374)
 
@@ -31,8 +42,10 @@ head(Data, 10)
 str(Data)
 
 ```
-```{r Data Explorations}
 
+## Data Exploration and Cleaning
+
+```{r Data Explorations}
 
 # look into Notes
 unique(Data$Notes)
@@ -50,15 +63,19 @@ Data <- Data[Data$Month != "Sep., 2024 (provisional and partial)", ]
 Data$Provisional <- grepl("\\(provisional\\)", Data$Month)
 
 # Delete " (provisional)" from the Date
-Data$Month <- gsub(" \\(provisional\\)", "", Data$Month)
+####Data$Month <- gsub(" \\(provisional\\)", "", Data$Month)
 
 # Convert into Date Variable
-Data$Month <- as.yearmon(Data$Month, format = "%b., %Y")
+####Data$Month <- as.yearmon(Data$Month, format = "%b., %Y")
+Data <- Data %>%
+  mutate(`Month` = as.yearmon(`Month Code`, format = "%Y/%m"))
 
 
-# look into Deaths
-Data$Deaths
+#### look into Deaths
+#### Data$Deaths
 
+# count of "Suppressed"
+sum(Data$Deaths == "Suppressed")
 
 # Some of the numbers are "Suppressed" this means that there are between 1 and 9 cases
 # To use Deaths as a number we can leave them as NA's or substitute by a random number between 1 and 9
@@ -71,63 +88,42 @@ Data$Deaths <- ifelse(Data$Deaths == "Suppressed", sample(1:9, sum(Data$Deaths =
 Data$Deaths <- as.numeric(Data$Deaths)
 
 summary(Data)
-
+sum(Data$Deaths == "Suppressed")
 # Delete all columns that end on Code, they are duplicates of the other columns
 Data <- Data[, !grepl("Code$", names(Data))]
-# Quality of Data from 2024 is not sufficient yet (delete)
-Data <- Data %>% filter(Month < as.yearmon("2024-01-01"))
 
-```
-## Including Plots
-
-```{r Drug induced by State, echo=FALSE}
-Data %>%
-  filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes") %>%
-  group_by(Month, `Occurrence State`) %>% 
-  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%  # Sum of Death per Month and State
-  ggplot(aes(x = Month, y = Total_Deaths, color = `Occurrence State`)) +
-  geom_line()
+glimpse(Data)
 ```
 
-```{r Drug induced by State Quarterly (smoother), echo=FALSE}
+## Baseline and Trend Analysis
+We will calculate the baseline drug-related death rates for Oregon, California, and Washington from 2018 to 2019, prior to the law’s enactment, to establish any pre-existingtrends. 
+Although the dataset does not include details on socioeconomic factors or the effects of COVID-19, we will acknowledge these as potential confounding variables and incorporate them into the discussion when interpreting the results. This analysis will help isolate changes attributable to the law rather than external factors.
 
-# we don't have to use all the plots, it's just to get some idea of the data and decide what to chose.
+```{r Baseline and Trend Analysis}
+# Filter the data for the years 2018 to 2019 
+Data_2018_2019 <- Data %>%
+  filter(`Month` >= as.yearmon("ene. 2018") & `Month` <= as.yearmon("dic. 2019"))
 
-Data %>%
-  filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes") %>% 
-  mutate(Quarter = floor_date(as.Date(Month), "quarter")) %>%  # Create a Quarter variable
-  group_by(Quarter, `Occurrence State`) %>%  # Group by Quarter and Occurrence State
-  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%
-  ggplot(aes(x = Quarter, y = Total_Deaths, color = `Occurrence State`, group = `Occurrence State`)) +  # Color by Occurrence State
-  geom_line() +
-  labs(x = "Quarter", y = "Total Deaths") 
+str(Data_2018_2019)
+
+# Group the data by occurrence state and year
+Data_2018_2019 <- Data_2018_2019 %>%
+  group_by(`Occurrence State`, lubridate::year(`Month`)) %>%
+  summarise(Deaths = sum(Deaths))
+
+# Calculate the average number of deaths per year for each occurrence state
+Baseline <- Data_2018_2019 %>%
+  group_by(`Occurrence State`) %>%
+  summarise(Avg_Deaths = mean(Deaths))
+
+# Plot the average number of deaths per year for each occurrence state
+library(ggplot2)
+
+ggplot(Baseline, aes(x = `Occurrence State`, y = Avg_Deaths, fill = `Occurrence State`)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Number of Drug-Related Deaths per Year (2018-2019)",
+       x = "Occurrence State",
+       y = "Average Number of Deaths") +
+  theme_minimal()
 ```
 
-```{r Drug induced by State and Gender, echo=FALSE}
-Data %>%
-  filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes") %>%
-  group_by(Month, `Occurrence State`, Gender) %>%  # Add Gender to the grouping
-  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%
-  ggplot(aes(x = Month, y = Total_Deaths, linetype = Gender, color = `Occurrence State`, group = interaction(`Occurrence State`, Gender)) ) +  # Differentiate by Gender and Occurrence State
-  geom_line() +
-  labs(linetype = "Gender", color = "Occurrence State")
-```
-
-```{r Oregon Causes of death (logarithmic), echo=FALSE}
-Data %>%
-  filter(`Occurrence State` == "Oregon", 
-         `UCD - Drug/Alcohol Induced` != "Data not shown due to 6 month lag to account for delays in death certificate completion for certain causes of death." ) %>%
-  group_by(Month, `UCD - Drug/Alcohol Induced`) %>% 
-  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%  # Sum of Death per Month and State
-  ggplot(aes(x = Month, y = Total_Deaths, color = `UCD - Drug/Alcohol Induced`)) +
-  geom_line()+
-  scale_y_log10()
-```
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
