@@ -11,18 +11,17 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## R Markdown
 
-```{r lybraries, include=FALSE}
+```{r libraries, include=FALSE}
 library(readxl)
 library(dplyr)
 library(zoo)
 
-
-setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
-
+#setting directory
+#setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+getwd()
 ```
 
 ```{r load ds_drug_related_deaths}
-
 # load the relevant part of the Data set, exclude notes starting from row 4374
 Data <- read_excel("data/Drug_related_Deaths_2018-2024.xlsx", n_max = 4374)
 
@@ -72,7 +71,7 @@ Data$Deaths <- ifelse(Data$Deaths == "Suppressed", sample(1:9, sum(Data$Deaths =
 Data$Deaths <- as.numeric(Data$Deaths)
 
 summary(Data)
-=======
+
 # Delete all columns that end on Code, they are duplicates of the other columns
 Data <- Data[, !grepl("Code$", names(Data))]
 
