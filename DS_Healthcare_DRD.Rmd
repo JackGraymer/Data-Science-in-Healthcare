@@ -72,6 +72,9 @@ Data$Deaths <- ifelse(Data$Deaths == "Suppressed", sample(1:9, sum(Data$Deaths =
 Data$Deaths <- as.numeric(Data$Deaths)
 
 summary(Data)
+=======
+# Delete all columns that end on Code, they are duplicates of the other columns
+Data <- Data[, !grepl("Code$", names(Data))]
 
 ```
 ## Including Plots
