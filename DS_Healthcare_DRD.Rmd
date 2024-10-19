@@ -68,7 +68,8 @@ Data$Provisional <- grepl("\\(provisional\\)", Data$Month)
 # Convert into Date Variable
 ####Data$Month <- as.yearmon(Data$Month, format = "%b., %Y")
 Data <- Data %>%
-  mutate(`Month` = as.yearmon(`Month Code`, format = "%Y/%m"))
+  #mutate(`Month` = as.yearmon(`Month Code`, format = "%Y/%m"))
+    mutate(`Month` = ym(`Month Code`))
 
 
 #### look into Deaths
@@ -102,13 +103,13 @@ Although the dataset does not include details on socioeconomic factors or the ef
 ```{r Baseline and Trend Analysis}
 # Filter the data for the years 2018 to 2019 
 Data_2018_2019 <- Data %>%
-  filter(`Month` >= as.yearmon("ene. 2018") & `Month` <= as.yearmon("dic. 2019"))
+  filter(`Month` >= ym("2018-01") & `Month` <= ym("2019-12"))
 
 str(Data_2018_2019)
 
 # Group the data by occurrence state and year
 Data_2018_2019 <- Data_2018_2019 %>%
-  group_by(`Occurrence State`, lubridate::year(`Month`)) %>%
+  group_by(`Occurrence State`, year = year(`Month`)) %>%
   summarise(Deaths = sum(Deaths))
 
 # Calculate the average number of deaths per year for each occurrence state
