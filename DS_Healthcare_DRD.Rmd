@@ -273,13 +273,29 @@ Data_monthly <- Data_monthly %>%
 # Difference-in-Differences (DiD) regression model with Deaths_per_100000
 
 did_model <- lm(Deaths_per_100000 ~ treatment + post_policy + interaction, data = Data_monthly)
-
-# Get the summary of the model to evaluate the effect
 summary(did_model)
 
-# Use robust standard errors to handle heteroscedasticity
+# Robust standard errors to handle heteroscedasticity
 coeftest(did_model, vcov = vcovHC(did_model, type = "HC1"))
 
+```
+## Model interpretation
+In this analysis, a **Difference-in-Differences (DiD)** model was applied to evaluate the impact of Oregon's decriminalization policy on drug-related deaths. Three key variables were included in the model:
+
+1. **Treatment**: This variable identifies whether a state is part of the treatment group. In this case, Oregon was assigned a value of 1 (treatment group), while California and Washington, which served as control states, were assigned a value of 0.
+   
+2. **Post-policy**: This variable distinguishes the period before and after the policy change. It takes a value of 1 for observations from 2021 and later (post-policy period), and 0 for years prior to the policy implementation.
+   
+3. **Interaction**: The interaction term between the treatment and post-policy variables captures the key DiD effect. This term measures the change in the outcome (deaths per 100,000 inhabitants) in Oregon after the policy change, relative to the trends in the control states.
+
+#### Key Coefficients:
+- The **intercept** (85.849) represents the baseline level of drug-related deaths per 100,000 in the control states (California and Washington) before the policy change.
+- The **treatment coefficient** (21.017) indicates that, before the policy change, Oregon had 21.017 more deaths per 100,000 compared to the control states.
+- The **post-policy coefficient** (9.759) shows that, on average, across all states, drug-related deaths increased by 9.759 per 100,000 after 2021, regardless of the policy.
+- The **interaction coefficient** (6.033) represents the estimated effect of the policy in Oregon, showing that the increase in deaths per 100,000 in Oregon after the policy change was 6.033 higher than the increase observed in the control states. However, this effect was not statistically significant (p-value = 0.184), suggesting that there is insufficient evidence to conclude that the policy had a meaningful impact on the outcome.
+
+
+```{r Plot}
 
 # Plot the trends over time for each state
 ggplot(Data_monthly, aes(x = date, y = Deaths_per_100000, color = `Occurrence State`)) +
@@ -290,6 +306,18 @@ ggplot(Data_monthly, aes(x = date, y = Deaths_per_100000, color = `Occurrence St
        x = "Year", y = "Deaths_per_100000") +
   theme_minimal()
 
+
+# Generate predicted values based on the model
+Data_monthly$predicted <- predict(did_model, newdata = Data_monthly)
+
+# Visualize the predicted trends
+ggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +
+  geom_line(linewidth = 1.2) +
+  geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
+  labs(title = "Predicted Drug-Related Deaths per 100,000 Over Time",
+       subtitle = "Oregon vs Control States",
+       x = "Date", y = "Predicted Deaths per 100,000 inhabitants") +
+  theme_minimal()
 
 
 ```
