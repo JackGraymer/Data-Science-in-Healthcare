@@ -1,0 +1,60 @@
+---
+title: "DS Healthcare ToDo Layout"
+author: "Cervan, Del Conte, Kunz"
+date: "2024-10-04"
+output:
+  pdf_document:
+---
+
+# Data Science Project Plan: Drug-Related Deaths Oregon after Ballot Measure 110
+
+## 1. Understand the Problem
+
+- [ ] **Research Focus**: The project aims to assess trends and impacts of drug-related deaths in the health sector. A particular focus is likely comparing death rates across different states and potentially analyzing policy effects, such as the 2020 Oregon drug decriminalization law.
+- [ ] **Research Question**: Based on the data and background, formulate a clear research question. Example: *How have drug-related deaths evolved in Oregon, California, and Washington from 2018 to 2024, and what role has legislation played?*
+- [ ] **Exploratory Insights**: Consider key factors like population sizes, drug policies, and external influences (e.g., COVID-19) to contextualize the deaths.
+
+## 2. Data Cleaning and Preprocessing
+
+- [ ] **Initial Cleaning**: Inspect the dataset for missing or duplicated data. Handle values flagged as “suppressed” or missing by either statistical imputation (if the gaps are small) or excluding them for larger inconsistencies.
+- [ ] **Standardization**: Normalize death rates to deaths per 100,000 people. This will account for population differences across states and ensure fair comparisons.
+- [ ] **Date Conversion**: Ensure the data is in a time-series format (monthly death rates), making it suitable for trend and time-based analysis.
+
+## 3. Exploratory Data Analysis (EDA)
+
+- [ ] **Trend Analysis**: Plot the monthly death rates from 2018 to 2024 for each state to visualize trends. This will help spot any visible changes in the death rates over time.
+- [ ] **Identify Baseline Period**: Establish pre-policy change trends (e.g., deaths from 2018–2020 in Oregon before the 2021 decriminalization). Compare these with the post-law period (2021–2024).
+- [ ] **Correlation Analysis**: Investigate potential relationships between variables (e.g., different states, death rates, and time) using correlation coefficients and scatter plots.
+
+## 4. Hypothesis Testing and Impact Analysis
+
+- [ ] **Difference-in-Differences (DiD) Method**: As mentioned in the preliminary study, DiD analysis will help you measure the impact of Oregon’s decriminalization policy. Oregon serves as the "treatment" state, and California and Washington as "control" states.
+    - [ ] Compare pre- and post-2021 death rates in Oregon to those of the control states.
+    - [ ] Perform subgroup analysis by gender or age if the data allows.
+- [ ] **Regression Discontinuity Analysis**: To further validate the DiD results, you could apply regression discontinuity to the time when the Oregon law was enacted.
+
+## 5. Confounding Variables
+
+- [ ] **External Factors**: Acknowledge and potentially model the effects of external influences like COVID-19 or socioeconomic factors that might affect the trends.
+- [ ] **Robustness Checks**: Conduct placebo tests by applying the DiD model to pre-2021 periods to ensure the results are not random.
+
+## 6. Visualization
+
+- [ ] **Time-Series Plots**: Create plots to illustrate the changes in drug-related death rates over time across the states.
+- [ ] **Bar Charts**: Visualize the differences in death rates before and after policy changes in Oregon and the other states.
+- [ ] **Geographical Heatmaps**: Display the impact geographically, showing the intensity of drug-related deaths by state.
+
+## 7. Model Validation
+
+- [ ] **Alternative Models**: Besides DiD and regression, you can try machine learning models, such as time-series forecasting (e.g., ARIMA) to predict future death trends.
+- [ ] **Cross-Validation**: Validate the models with part of your data (e.g., train on 2018-2022 and validate on 2023-2024).
+
+## 8. Policy Interpretation and Conclusion
+
+- [ ] **Statistical Insights to Policy**: Translate your findings into public health implications. Did the policy significantly reduce or increase death rates?
+- [ ] **Actionable Recommendations**: Offer insights on whether similar decriminalization policies should be considered or adjusted in other regions, based on your data.
+
+## 9. Final Report
+
+- [ ] **Structure**: Present a well-organized report. Include sections such as Introduction, Methodology, Results, Discussion, and Conclusion.
+- [ ] **Limitations**: Discuss any limitations like missing data, external confounding variables, or restricted sample sizes.
