@@ -25,6 +25,7 @@ library(dplyr)
 library(zoo)
 library(lubridate)
 library(ggplot2)
+library(tidyr)
 
 
 #setting directory
@@ -34,7 +35,7 @@ getwd()
 
 ## Data loading
 
-```{r load dataset}
+```{r load main dataset}
 # load the relevant part of the Data set, exclude notes starting from row 4374
 Data <- read_excel("data/Drug_related_Deaths_2018-2024.xlsx", n_max = 4374)
 
@@ -42,6 +43,92 @@ Data <- read_excel("data/Drug_related_Deaths_2018-2024.xlsx", n_max = 4374)
 # Overview for the Data
 head(Data, 10)
 str(Data)
+
+```
+
+```{r load populaiton Data}
+# Read population data from Excel file for each region
+
+# Load the population data from the first range (D244:M244)
+population_oregon_1 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
+                                  sheet = "Oregon", 
+                                  range = "D244:M244", 
+                                  col_names = FALSE)  # Disable header reading
+
+# Load the population data from the second range (Q244:T244)
+population_oregon_2 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
+                                  sheet = "Oregon", 
+                                  range = "Q244:T244", 
+                                  col_names = FALSE)  # Disable header reading
+
+# Combine the two data frames (horizontally) into one row
+population_oregon <- cbind(population_oregon_1, population_oregon_2)
+
+# Manually set the column names (years 2010 to 2023)
+colnames(population_oregon) <- 2010:2023
+
+
+
+# Load the population data from the first range in California
+population_california_1 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
+                                  sheet = "California", 
+                                  range = "D487:M487", 
+                                  col_names = FALSE)  # Disable header reading
+
+# Load the population data from the second range (Q487:T487)
+population_california_2 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
+                                  sheet = "California", 
+                                  range = "Q487:T487", 
+                                  col_names = FALSE)  # Disable header reading
+
+# Combine the two data frames (horizontally) into one row
+population_california <- cbind(population_california_1, population_california_2)
+
+# Manually set the column names (years 2010 to 2023)
+colnames(population_california) <- 2010:2023
+
+
+
+# Load the population data from the first range in Washington
+population_washington_1 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
+                                  sheet = "Washington", 
+                                  range = "D286:M286", 
+                                  col_names = FALSE)  # Disable header reading
+
+# Load the population data from the second range 
+population_washington_2 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
+                                  sheet = "Washington", 
+                                  range = "Q286:T286", 
+                                  col_names = FALSE)  # Disable header reading
+
+# Combine the two data frames (horizontally) into one row
+population_washington <- cbind(population_washington_1, population_washington_2)
+
+# Manually set the column names (years 2010 to 2023)
+colnames(population_washington) <- 2010:2023
+
+
+# Combine population data into a single data frame with an added column for state
+population_data <- bind_rows(
+  population_oregon %>% mutate(State = "Oregon"),
+  population_washington %>% mutate(State = "Washington"),
+  population_california %>% mutate(State = "California")
+)
+
+
+# Remove the temporary variables from the environment
+rm(population_oregon_1, population_oregon_2, population_washington_1, 
+   population_washington_2, population_california_1, population_california_2,
+   population_oregon, population_washington, population_california)
+
+# Convert wide format to long format
+population_data <- population_data %>%
+  pivot_longer(cols = -State,    # All columns except 'State'
+               names_to = "year",   # The new column for years
+               values_to = "population_count")  # The new column for population counts
+
+#Convert year collum to numeric
+population_data$year <- as.numeric(population_data$year)  
 
 ```
 
@@ -99,69 +186,42 @@ glimpse(Data)
 ```
 
 ## Baseline and Trend Analysis
-We will calculate the baseline drug-related death rates for Oregon, California, and Washington from 2018 to 2019, prior to the law’s enactment, to establish any pre-existingtrends. 
+We will calculate the drug-related death rates for Oregon, California, and Washington for all complete years in our dataset. We then focus on the years 2018-2020y prior to the law’s enactment, to establish any pre-existing trends. 
 Although the dataset does not include details on socioeconomic factors or the effects of COVID-19, we will acknowledge these as potential confounding variables and incorporate them into the discussion when interpreting the results. This analysis will help isolate changes attributable to the law rather than external factors.
 
+
 ```{r Baseline and Trend Analysis}
-# Filter the data for the years 2018 to 2019 
-Data_2018_2019 <- Data %>%
-  filter(`Month` >= ym("2018-01") & `Month` <= ym("2019-12"))
 
-str(Data_2018_2019)
+# Filter the data for each complete years 2018 to 2023 
+Data_18_23 <- Data %>%
+  filter(`Month` >= ym("2018-01") & `Month` <= ym("2023-12"))
 
-# Group the data by occurrence state and year
-Data_2018_2019 <- Data_2018_2019 %>%
+# Check the structure of the data
+str(Data_18_23)
+
+# Group the data by occurrence state and year, then sum deaths per year
+Data_18_23 <- Data_18_23 %>%
   group_by(`Occurrence State`, year = year(`Month`)) %>%
   summarise(Deaths = sum(Deaths))
 
-# Calculate the average number of deaths per year for each occurrence state
-Baseline <- Data_2018_2019 %>%
-  group_by(`Occurrence State`) %>%
-  summarise(Avg_Deaths = mean(Deaths))
+# Merge the death data with population data by state and year
+Data_with_population <- Data_18_23 %>%
+  left_join(population_data, by = c("Occurrence State" = "State", "year" = "year"))
 
-# Plot the average number of deaths per year for each occurrence state
-
-ggplot(Baseline, aes(x = `Occurrence State`, y = Avg_Deaths, fill = `Occurrence State`)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Average Number of Drug-Related Deaths per Year (2018-2019)",
-       x = "Occurrence State",
-       y = "Average Number of Deaths") +
-  theme_minimal()
-
-
-#Calculate deaths per 10000 inhabitants
-Baseline_10 <- data.frame(
-  `Occurrence State` = c("California", "Oregon", "Washington"),
-  Avg_Deaths = c(269264.0, 36903.0, 57593.5)
-)
-
-# Population data (replace these values with actual population sizes)
-population_data <- data.frame(
-  `Occurrence State` = c("California", "Oregon", "Washington"),
-  Population = c(32965607, 2963745, 4970509)  # populations from Census Bureau 2019
-)
-
-# Merge the Baseline data with population data
-Baseline_10 <- merge(Baseline_10, population_data, by = "Occurrence.State")
-
-# Calculate deaths per 10,000 inhabitants
-Baseline_10$Deaths_per_10000 <- (Baseline_10$Avg_Deaths / Baseline_10$Population) * 10000
+# Calculate deaths per 10,000 inhabitants for each year
+Data_with_population <- Data_with_population %>%
+  mutate(Deaths_per_10000 = (Deaths / population_count) * 10000)
 
 # View the result
-print(Baseline_10)
+print(Data_with_population)
 
-ggplot(Baseline_10, aes(x = `Occurrence.State`, y = Deaths_per_10000, fill = `Occurrence.State`)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Average Number of Drug-Related Deaths per 10'000 Inhabitants",
-       x = "Occurrence State",
-       y = "Average Number of Deaths per 10'000") +
+# Plot the number of deaths per 10,000 inhabitants for each year and state
+ggplot(Data_with_population, aes(x = factor(year), y = Deaths_per_10000, fill = `Occurrence State`)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Drug-Related Deaths per 10,000 Inhabitants (2018-2019)",
+       x = "Year",
+       y = "Deaths per 10,000 Inhabitants") +
   theme_minimal()
-
-
-```
-
-```{r Baseline and Trend Analysis}
-
 
 
 ```
