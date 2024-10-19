@@ -10,19 +10,19 @@ output:
 
 ## 1. Understand the Problem
 
-- [ ] **Research Focus**: The project aims to assess trends and impacts of drug-related deaths in the health sector. A particular focus is likely comparing death rates across different states and potentially analyzing policy effects, such as the 2020 Oregon drug decriminalization law.
-- [ ] **Research Question**: Based on the data and background, formulate a clear research question. Example: *How have drug-related deaths evolved in Oregon, California, and Washington from 2018 to 2024, and what role has legislation played?*
-- [ ] **Exploratory Insights**: Consider key factors like population sizes, drug policies, and external influences (e.g., COVID-19) to contextualize the deaths.
+- [x] **Research Focus**: The project aims to assess trends and impacts of drug-related deaths in the health sector. A particular focus is likely comparing death rates across different states and potentially analyzing policy effects, such as the 2020 Oregon drug decriminalization law.
+- [x] **Research Question**: Based on the data and background, formulate a clear research question. Example: *How have drug-related deaths evolved in Oregon, California, and Washington from 2018 to 2024, and what role has legislation played?*
+- [x] **Exploratory Insights**: Consider key factors like population sizes, drug policies, and external influences (e.g., COVID-19) to contextualize the deaths.
 
 ## 2. Data Cleaning and Preprocessing
 
-- [ ] **Initial Cleaning**: Inspect the dataset for missing or duplicated data. Handle values flagged as “suppressed” or missing by either statistical imputation (if the gaps are small) or excluding them for larger inconsistencies.
-- [ ] **Standardization**: Normalize death rates to deaths per 100,000 people. This will account for population differences across states and ensure fair comparisons.
-- [ ] **Date Conversion**: Ensure the data is in a time-series format (monthly death rates), making it suitable for trend and time-based analysis.
+- [x] **Initial Cleaning**: Inspect the dataset for missing or duplicated data. Handle values flagged as “suppressed” or missing by either statistical imputation (if the gaps are small) or excluding them for larger inconsistencies.
+- [x] **Standardization**: Normalize death rates to deaths per 100,000 people. This will account for population differences across states and ensure fair comparisons.
+- [x] **Date Conversion**: Ensure the data is in a time-series format (monthly death rates), making it suitable for trend and time-based analysis.
 
 ## 3. Exploratory Data Analysis (EDA)
 
-- [ ] **Trend Analysis**: Plot the monthly death rates from 2018 to 2024 for each state to visualize trends. This will help spot any visible changes in the death rates over time.
+- [x] **Trend Analysis**: Plot the monthly death rates from 2018 to 2024 for each state to visualize trends. This will help spot any visible changes in the death rates over time.
 - [ ] **Identify Baseline Period**: Establish pre-policy change trends (e.g., deaths from 2018–2020 in Oregon before the 2021 decriminalization). Compare these with the post-law period (2021–2024).
 - [ ] **Correlation Analysis**: Investigate potential relationships between variables (e.g., different states, death rates, and time) using correlation coefficients and scatter plots.
 
