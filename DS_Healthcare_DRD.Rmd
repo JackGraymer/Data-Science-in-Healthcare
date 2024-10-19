@@ -24,6 +24,8 @@ library(readxl)
 library(dplyr)
 library(zoo)
 library(lubridate)
+library(ggplot2)
+
 
 #setting directory
 #setwd(dirname(rstudioapi::getSourceEditorContext()$path))
@@ -118,7 +120,6 @@ Baseline <- Data_2018_2019 %>%
   summarise(Avg_Deaths = mean(Deaths))
 
 # Plot the average number of deaths per year for each occurrence state
-library(ggplot2)
 
 ggplot(Baseline, aes(x = `Occurrence State`, y = Avg_Deaths, fill = `Occurrence State`)) +
   geom_bar(stat = "identity") +
@@ -126,5 +127,41 @@ ggplot(Baseline, aes(x = `Occurrence State`, y = Avg_Deaths, fill = `Occurrence 
        x = "Occurrence State",
        y = "Average Number of Deaths") +
   theme_minimal()
+
+
+#Calculate deaths per 10000 inhabitants
+Baseline_10 <- data.frame(
+  `Occurrence State` = c("California", "Oregon", "Washington"),
+  Avg_Deaths = c(269264.0, 36903.0, 57593.5)
+)
+
+# Population data (replace these values with actual population sizes)
+population_data <- data.frame(
+  `Occurrence State` = c("California", "Oregon", "Washington"),
+  Population = c(32965607, 2963745, 4970509)  # populations from Census Bureau 2019
+)
+
+# Merge the Baseline data with population data
+Baseline_10 <- merge(Baseline_10, population_data, by = "Occurrence.State")
+
+# Calculate deaths per 10,000 inhabitants
+Baseline_10$Deaths_per_10000 <- (Baseline_10$Avg_Deaths / Baseline_10$Population) * 10000
+
+# View the result
+print(Baseline_10)
+
+ggplot(Baseline_10, aes(x = `Occurrence.State`, y = Deaths_per_10000, fill = `Occurrence.State`)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Number of Drug-Related Deaths per 10'000 Inhabitants",
+       x = "Occurrence State",
+       y = "Average Number of Deaths per 10'000") +
+  theme_minimal()
+
+
 ```
 
+```{r Baseline and Trend Analysis}
+
+
+
+```
