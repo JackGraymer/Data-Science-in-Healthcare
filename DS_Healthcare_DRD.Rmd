@@ -134,7 +134,7 @@ population_data <- population_data %>%
                names_to = "year",   # The new column for years
                values_to = "population_count")  # The new column for population counts
 
-#Convert year collum to numeric
+#Convert year column to numeric
 population_data$year <- as.numeric(population_data$year)  
 
 ```
@@ -198,6 +198,9 @@ sum(Data$Deaths == "Suppressed")
 # Delete all columns that end on Code, they are duplicates of the other columns
 Data <- Data[, !grepl("Code$", names(Data))]
 
+# Filters the data to only include drug-induced deaths (removes alcohol-induced deaths)
+Data <- Data %>% filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes")
+
 glimpse(Data)
 ```
 
@@ -207,50 +210,11 @@ glimpse(Data)
 We will calculate the drug-related death rates for Oregon, California, and Washington for all complete years in our dataset to have an overview of the situation. We then focus on the years 2018-2020 prior to the law’s enactment, to establish any pre-existing trends. 
 Although the dataset does not include details on socioeconomic factors or the effects of COVID-19, we will acknowledge these as potential confounding variables and incorporate them into the discussion when interpreting the results. This analysis will help isolate changes attributable to the law rather than external factors.
 
-```{r Baseline and Trend Analysis}
-
-# Filter the data for each complete years 2018 to 2023 
-Data_18_23 <- Data %>%
-  filter(`Month` >= ym("2018-01") & `Month` <= ym("2023-12"))
-
-# Group the data by occurrence state and year, then sum deaths per year
-Data_18_23 <- Data_18_23 %>%
-  group_by(`Occurrence State`, year = year(`Month`)) %>%
-  summarise(Deaths = sum(Deaths))
-
-# Merge the death data with population data by state and year
-Data_with_population <- Data_18_23 %>%
-  left_join(population_data, by = c("Occurrence State" = "State", "year" = "year"))
-
-# Calculate deaths per 100,000 inhabitants for each year
-Data_with_population <- Data_with_population %>%
-  mutate(Deaths_per_100000 = (Deaths / population_count) * 100000)
-
-
-# Plot the number of deaths per 10,000 inhabitants for each year and state
-ggplot(Data_with_population, aes(x = factor(year), y = Deaths_per_100000, fill = `Occurrence State`)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Deaths per 100'000 Inhabitants (2018-2023)",
-       x = "Year",
-       y = "Deaths per 100'000 Inhabitants") +
-  theme_minimal()
-
-
-# Plot the trends over time for each state per year
-ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occurrence State`)) +
-  geom_line(linewidth = 1.2) +
-  geom_vline(xintercept = 2021, linetype = "dashed", color = "red") +  # Mark the policy change
-  labs(title = "Deaths per 100,000 Inhabitants by State",
-       subtitle = "Oregon policy change in 2021",
-       x = "Year", y = "Deaths per 100,000 inhabitants") +
-  theme_minimal()
-```
-
 ```{r Baseline and Trend Analysis for drug induced deaths}
 
 # Filter the data for each complete years 2018 to 2023 and make sure to use only durg induced cases
 Data_18_23 <- Data %>%
-  filter(`Month` >= ym("2018-01") & `Month` <= ym("2023-12") & `UCD - Drug/Alcohol Induced` == "Drug-induced causes")
+  filter(`Month` >= ym("2018-01") & `Month` <= ym("2023-12"))
 
 # Group the data by occurrence state and year, then sum deaths per year
 Data_18_23 <- Data_18_23 %>%
@@ -284,58 +248,6 @@ ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occur
        x = "Year", y = "Deaths per 100,000 inhabitants") +
   theme_minimal()
 ```
-```{r Baseline and Trend Analysis for drug induced deaths percentage}
-
-# Filter the data for each complete years 2018 to 2023 and make sure to use only durg induced cases
-Data_18_23 <- Data %>%
-  filter(`Month` >= ym("2018-01") & `Month` <= ym("2023-12") & `UCD - Drug/Alcohol Induced` == "Drug-induced causes")
-
-# Group the data by occurrence state and year, then sum deaths per year
-Data_18_23 <- Data_18_23 %>%
-  group_by(`Occurrence State`, year = year(`Month`)) %>% 
-  summarise(Deaths = sum(Deaths))
-
-all_deaths_18_23 <- Data %>%
-  filter(`Month` >= ym("2018-01") & `Month` <= ym("2023-12"))%>%
-  group_by(`Occurrence State`, year = year(`Month`)) %>% 
-  summarise(Deaths = sum(Deaths))
-
-Data_18_23$allDeaths <- all_deaths_18_23$Deaths
-
-# Merge the death data with population data by state and year
-Data_with_population <- Data_18_23 %>%
-  left_join(population_data, by = c("Occurrence State" = "State", "year" = "year"))
-
-# Calculate deaths per 100,000 inhabitants for each year
-Data_with_population <- Data_with_population %>%
-  mutate(Drugdeaths = (Deaths / allDeaths) * 100)
-
-# View the result
-print(Data_with_population)
-
-# Plot the number of deaths per 10,000 inhabitants for each year and state
-ggplot(Data_with_population, aes(x = factor(year), y = Drugdeaths, fill = `Occurrence State`)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Percentage of Drug-Related Deaths on all Deaths(2018-2023)",
-       x = "Year",
-       y = "Percentage of Drug-Related Deaths") +
-  theme_minimal()
-
-
-# Plot the trends over time for each state per year
-ggplot(Data_with_population, aes(x = year, y = Drugdeaths, color = `Occurrence State`)) +
-  geom_line(linewidth = 1.2) +
-  geom_vline(xintercept = 2021, linetype = "dashed", color = "red") +  # Mark the policy change
-  labs(title = "Percentage of Drug-Related Deaths on all Deaths(2018-2023)",
-       subtitle = "Oregon policy change in 2021",
-       x = "Year", y = "Percentage of Drug-Related Deaths") +
-  theme_minimal()
-
-
-
-```
-
-
 
 # For this Analyis we wanted to look at the monthly numbers
 
@@ -457,3 +369,123 @@ ggplot(Data_RD, aes(x = date, y = Deaths_per_100000, color = as.factor(policy_ch
 ```
 
 The regression discontinuity analysis indicates a significant increase in drug-related deaths following Oregon's 2021 decriminalization policy. The model estimates an increase of approximately 15 deaths per 100,000 inhabitants after the policy change, with a highly significant p-value (p < 0.001). This suggests a strong association between the policy and the rise in drug-related deaths. However, the model explains only about 37.86% of the variance in deaths, implying that other factors, such as external events or systemic issues, may also influence these trends. Further analysis is required to account for additional variables.
+
+## Confounding Variables
+
+### External Factors
+
+When interpreting the results of our analysis, it is crucial to consider the potential impact of external factors that might confound the observed trends in drug-related deaths. Two significant external influences that could affect our results are the COVID-19 pandemic and various socioeconomic factors.
+
+#### COVID-19 Pandemic
+
+The COVID-19 pandemic, which began in early 2020, has had widespread and profound impacts on public health, economic stability, and social behaviors. The pandemic could have influenced drug-related deaths in several ways. The healthcare system strain during the pandemic potentially limited access to addiction treatment and other healthcare services. Increased stress, anxiety, and isolation during the pandemic may have led to higher substance use and overdose rates. Job losses and economic instability could have exacerbated substance abuse issues. Temporary changes in drug policy and law enforcement practices during the pandemic might have affected drug availability and usage patterns.
+
+To account for the potential impact of COVID-19, we could include additional variables in our model, such as monthly COVID-19 case rates, unemployment rates, or other relevant indicators. This would help isolate the effect of the decriminalization policy from the broader impacts of the pandemic.
+
+#### Socioeconomic Factors
+
+Socioeconomic factors, such as income levels, employment rates, education, and housing stability, can significantly influence drug-related behaviors and health outcomes. Variations in these factors across states and over time could confound our analysis. Economic downturns or improvements can affect substance use patterns and access to treatment. Education levels might influence awareness and behaviors related to drug use and health. Homelessness or unstable housing situations can increase vulnerability to substance abuse and overdose.
+
+Incorporating socioeconomic data into our analysis could provide a more nuanced understanding of the trends in drug-related deaths. We could use publicly available datasets to obtain state-level indicators of these factors and include them as covariates in our regression models.
+
+### Robustness Checks
+
+To ensure the robustness of our findings,  Placebo tests will be applied by using the Difference-in-Differences (DiD) model to periods before the policy change (e.g., using a fictitious policy change date) to check if similar trends are observed. This helps confirm that the observed effects are not due to random fluctuations. If the placebo test shows no significant impact, it strengthens the validity of the actual policy analysis.
+
+```{r Robustness Checks}
+# Make a Difference-in-Differences model for the years 2018-2020 as a placebo test
+Data_placebo <- Data_monthly %>%
+  filter(date >= as.Date("2018-01-01") & date <= as.Date("2020-12-01"))
+
+# Create 'treatment' and 'post_policy' variables for the placebo test
+Data_placebo <- Data_placebo %>%
+  mutate(
+    treatment = ifelse(`Occurrence State` == "Oregon", 1, 0),  # 1 for Oregon, 0 for California/Washington
+    post_policy = ifelse(year >= 2019, 1, 0),  # 1 for years 2019 and later
+    interaction = treatment * post_policy  # Interaction term for DiD
+  )
+
+# Difference-in-Differences (DiD) model for the placebo test
+did_model_placebo <- lm(Deaths_per_100000 ~ treatment + post_policy + interaction, data = Data_placebo)
+summary(did_model_placebo)
+
+# Robust standard errors for the placebo test
+coeftest(did_model_placebo, vcov = vcovHC(did_model_placebo, type = "HC1"))
+```
+
+The results of the placebo test using a Difference-in-Differences (DiD) model show that the interaction term (policy effect) is not statistically significant (Estimate = 0.59, p = 0.92). This indicates that there is no meaningful effect of the "fictitious" policy change in the pre-treatment period (2018-2020).
+
+The lack of a significant effect in this placebo test suggests that the actual policy change in 2021 is likely responsible for the observed increase in drug-related deaths, as there is no similar effect before the real policy was implemented. Additionally, the model shows that the treatment variable (Oregon) has a significant positive coefficient (Estimate = 20.62, p < 0.001), indicating that Oregon had higher baseline drug-related death rates compared to the control states (California and Washington) even before the policy change. However, the non-significant interaction term supports the conclusion that no random changes occurred in the placebo period.
+
+This placebo test strengthens the validity of the original findings, suggesting that the observed policy effect is not due to random fluctuations but rather the actual decriminalization policy implemented in 2021.
+
+## time-series forecasting (e.g., ARIMA) to predict future death trends.
+
+```{r Time-Series Forecasting}
+# Time-Series Forecasting: ARIMA Model
+if (!require(forecast)) {
+  install.packages("forecast")
+  library(forecast)
+}
+# Extract the time series data for Oregon
+Data_oregon <- Data_monthly %>%
+  filter(`Occurrence State` == "Oregon") %>%
+  select(date, Deaths_per_100000)
+
+# Create a time series object
+oregon_ts <- ts(Data_oregon$Deaths_per_100000, start = c(2018, 1), frequency = 12)
+
+# Fit an ARIMA model to the time series data
+arima_model <- arima(oregon_ts, order = c(1, 1, 1))
+
+# Generate forecasts for the next 12 months
+forecast_values <- forecast(arima_model, h = 12)
+
+# Plot the observed data and forecasted values
+plot(forecast_values, main = "ARIMA Forecast for Drug-Related Deaths in Oregon",
+     xlab = "Year", ylab = "Deaths per 100,000 inhabitants")
+```
+
+```{r Cross-Validation}	
+# Cross-Validation: Validate the ARIMA model with part of the data
+# Split the data into training (2018-2022) and validation (2023-2024) sets
+training_data <- window(oregon_ts, start = c(2018, 1), end = c(2022, 12))
+validation_data <- window(oregon_ts, start = c(2023, 1), end = c(2024, 12))
+
+# Fit the ARIMA model to the training data
+arima_model_cv <- arima(training_data, order = c(1, 1, 1))
+
+# Generate forecasts for the validation period
+forecast_values_cv <- forecast(arima_model_cv, h = 24)
+
+# Plot the observed data, forecasted values, and validation data
+plot(forecast_values_cv, main = "ARIMA Forecast Validation for Drug-Related Deaths in Oregon",
+     xlab = "Year", ylab = "Deaths per 100,000 inhabitants")
+lines(validation_data, col = "red")
+legend("topleft", legend = c("Forecast", "Validation Data"), col = c("black", "red"), lty = 1)
+
+
+```	
+
+```{r Time-Series Forecasting TBATS}
+# Extract the time series data for Oregon
+Data_oregon <- Data_monthly %>%
+  filter(`Occurrence State` == "Oregon") %>%
+  select(date, Deaths_per_100000)
+
+# Create a time series object
+oregon_ts <- ts(Data_oregon$Deaths_per_100000, start = c(2018, 1), frequency = 12)
+
+# Fit a TBATS model to the time series data
+tbats_model <- tbats(oregon_ts)
+
+# Generate forecasts for the next 12 months
+forecast_values_tbats <- forecast(tbats_model, h = 12)
+
+# Plot the observed data and forecasted values
+
+plot(forecast_values_tbats, main = "TBATS Forecast for Drug-Related Deaths in Oregon",
+     xlab = "Year", ylab = "Deaths per 100,000 inhabitants")
+     
+
+```	
