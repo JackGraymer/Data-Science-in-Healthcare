@@ -6,7 +6,7 @@ output:
   pdf_document:
     toc: true
     toc_depth: 3
-    number_sections: true
+    number_sections: true    
 ---
 
 # Summary
@@ -32,11 +32,20 @@ library(sandwich)
 #globally exclude code chunks from the output
 knitr::opts_chunk$set(echo = FALSE)
 
+#globally turn on caching
+knitr::opts_chunk$set(cache = TRUE)
+
+# globally turn off warnings and messages
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+
+# globally set the theme for ggplot
+theme_set(theme_minimal())
+
 #setting directory
 #setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 getwd()
 ```
-
 
 For privacy reasons, the data set does not contain any personal information about the deceased individuals. Furthermore, in instances where the number of deaths is less than 10, the data is marked as "Suppressed" to protect the privacy of the individuals.
 
@@ -198,7 +207,7 @@ sum(Data$Deaths == "Suppressed")
 # Delete all columns that end on Code, they are duplicates of the other columns
 Data <- Data[, !grepl("Code$", names(Data))]
 
-# Filters the data to only include drug-induced deaths (removes alcohol-induced deaths)
+# Filters the data to only include drug-induced deaths (removes alcohol-induced and non-drug related deaths)
 Data <- Data %>% filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes")
 
 glimpse(Data)
@@ -235,8 +244,7 @@ ggplot(Data_with_population, aes(x = factor(year), y = Deaths_per_100000, fill =
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Drug-Related Deaths per 100'000 Inhabitants (2018-2023)",
        x = "Year",
-       y = "Deaths per 100'000 Inhabitants") +
-  theme_minimal()
+       y = "Deaths per 100'000 Inhabitants")
 
 
 # Plot the trends over time for each state per year
@@ -245,8 +253,7 @@ ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occur
   geom_vline(xintercept = 2021, linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Drug-Related Deaths per 100,000 Inhabitants by State",
        subtitle = "Oregon policy change in 2021",
-       x = "Year", y = "Deaths per 100,000 inhabitants") +
-  theme_minimal()
+       x = "Year", y = "Deaths per 100,000 inhabitants")
 ```
 
 # For this Analyis we wanted to look at the monthly numbers
@@ -318,8 +325,7 @@ ggplot(Data_monthly, aes(x = date, y = Deaths_per_100000, color = `Occurrence St
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Drug-Related Deaths by State per 100000",
        subtitle = "Oregon policy change in February 2021",
-       x = "Year", y = "Deaths_per_100000") +
-  theme_minimal()
+       x = "Year", y = "Deaths_per_100000")
 
 
 # Generate predicted values based on the model
@@ -331,8 +337,7 @@ ggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Predicted Drug-Related Deaths per 100,000 Over Time",
        subtitle = "Oregon vs Control States",
-       x = "Date", y = "Predicted Deaths per 100,000 inhabitants") +
-  theme_minimal()
+       x = "Date", y = "Predicted Deaths per 100,000 inhabitants")
 ```
 
 ### Regression Discontinuity Analysis
@@ -363,8 +368,7 @@ ggplot(Data_RD, aes(x = date, y = Deaths_per_100000, color = as.factor(policy_ch
   scale_color_manual(values = c("0" = "blue", "1" = "red"), labels = c("Before Policy", "After Policy")) +
   labs(title = "Regression Discontinuity Analysis",
        subtitle = "Effect of Oregon Policy Change in 2021 (Oregon Only)",
-       x = "Date", y = "Deaths per 100,000 inhabitants") +
-  theme_minimal()
+       x = "Date", y = "Deaths per 100,000 inhabitants")
 
 ```
 
@@ -419,73 +423,54 @@ The lack of a significant effect in this placebo test suggests that the actual p
 
 This placebo test strengthens the validity of the original findings, suggesting that the observed policy effect is not due to random fluctuations but rather the actual decriminalization policy implemented in 2021.
 
-## time-series forecasting (e.g., ARIMA) to predict future death trends.
+## time-series forecasting (ARIMA) to predict future death trends.
 
-```{r Time-Series Forecasting}
-# Time-Series Forecasting: ARIMA Model
-if (!require(forecast)) {
-  install.packages("forecast")
-  library(forecast)
-}
-# Extract the time series data for Oregon
-Data_oregon <- Data_monthly %>%
+To predict future trends in drug-related deaths, we can use time-series forecasting models such as Autoregressive Integrated Moving Average (ARIMA). By fitting an ARIMA model to the historical data, we can generate forecasts for the upcoming years and assess the potential impact of the policy change on future death rates.
+
+```{r Time-Series Forecasting ARIMA-2}
+# Assuming data is loaded into a dataframe `Data`
+library(dplyr)
+library(forecast)
+
+# Filter the data for Oregon and clean it
+data_oregon <- Data %>%
   filter(`Occurrence State` == "Oregon") %>%
-  select(date, Deaths_per_100000)
+  filter(!Deaths == "Suppressed") %>%   # Handle suppressed values (remove them for now)
+  mutate(Deaths = as.numeric(Deaths),    # Convert Deaths to numeric
+         date = as.Date(paste0(Month, "-01")))  # Create a proper date column
 
-# Create a time series object
-oregon_ts <- ts(Data_oregon$Deaths_per_100000, start = c(2018, 1), frequency = 12)
+# Create a time series object for Oregon deaths
+ts_oregon <- ts(data_oregon$Deaths, start = c(2018, 1), frequency = 12)
 
-# Fit an ARIMA model to the time series data
-arima_model <- arima(oregon_ts, order = c(1, 1, 1))
+# Split the data for training (2018-2022) and validation (2023)
+train_ts <- window(ts_oregon, end = c(2022, 12))
+valid_ts <- window(ts_oregon, start = c(2023, 1), end = c(2023, 12))
+full_train_ts <- window(ts_oregon, end = c(2023, 12))
 
-# Generate forecasts for the next 12 months
-forecast_values <- forecast(arima_model, h = 12)
+# Fit an ARIMA model (or other model)
+arima_model <- auto.arima(train_ts)
+full_arima_model <- auto.arima(full_train_ts)
 
-# Plot the observed data and forecasted values
-plot(forecast_values, main = "ARIMA Forecast for Drug-Related Deaths in Oregon",
+# Forecast for the validation period (2023-2024)
+forecast_2023_2024 <- forecast(arima_model, h = 12)
+
+# Plot the forecast against the actual validation data
+plot(forecast_2023_2024)
+lines(valid_ts, col = "red")  # Add the actual data for comparison
+legend("topright", legend = c("Forecast", "Actual Data"), col = c("blue", "red"), lty = 1)
+
+# compute the accuracy of the model
+accuracy(forecast_2023_2024, valid_ts)
+
+# After validating the model, forecast for 2025
+forecast_2025 <- forecast(full_arima_model, h = 12)
+
+# Plot the forecast for 2025
+plot(forecast_2025, main = "Forecast for Drug-Related Deaths in Oregon (2025)",
      xlab = "Year", ylab = "Deaths per 100,000 inhabitants")
-```
-
-```{r Cross-Validation}	
-# Cross-Validation: Validate the ARIMA model with part of the data
-# Split the data into training (2018-2022) and validation (2023-2024) sets
-training_data <- window(oregon_ts, start = c(2018, 1), end = c(2022, 12))
-validation_data <- window(oregon_ts, start = c(2023, 1), end = c(2024, 12))
-
-# Fit the ARIMA model to the training data
-arima_model_cv <- arima(training_data, order = c(1, 1, 1))
-
-# Generate forecasts for the validation period
-forecast_values_cv <- forecast(arima_model_cv, h = 24)
-
-# Plot the observed data, forecasted values, and validation data
-plot(forecast_values_cv, main = "ARIMA Forecast Validation for Drug-Related Deaths in Oregon",
-     xlab = "Year", ylab = "Deaths per 100,000 inhabitants")
-lines(validation_data, col = "red")
-legend("topleft", legend = c("Forecast", "Validation Data"), col = c("black", "red"), lty = 1)
-
 
 ```	
 
-```{r Time-Series Forecasting TBATS}
-# Extract the time series data for Oregon
-Data_oregon <- Data_monthly %>%
-  filter(`Occurrence State` == "Oregon") %>%
-  select(date, Deaths_per_100000)
+While the forecasting model demonstrated reasonable accuracy on the training data (2018-2022), its performance on the test data (2023-2024) highlighted potential shortcomings. The increase in error metrics, particularly RMSE and MAPE, indicates that the model struggles to generalize well to unseen data, reflecting the complexity and potential shifts in drug-related deaths following Oregon's 2021 decriminalization policy. Despite performing better than a naive model (Theil's U of 0.85), the relatively high errors in the test set suggest that further refinements are necessary.
 
-# Create a time series object
-oregon_ts <- ts(Data_oregon$Deaths_per_100000, start = c(2018, 1), frequency = 12)
-
-# Fit a TBATS model to the time series data
-tbats_model <- tbats(oregon_ts)
-
-# Generate forecasts for the next 12 months
-forecast_values_tbats <- forecast(tbats_model, h = 12)
-
-# Plot the observed data and forecasted values
-
-plot(forecast_values_tbats, main = "TBATS Forecast for Drug-Related Deaths in Oregon",
-     xlab = "Year", ylab = "Deaths per 100,000 inhabitants")
-     
-
-```	
+These results imply that drug-related deaths in Oregon post-2021 may be influenced by factors not fully captured by the model, such as behavioral, societal, or systemic changes induced by the policy. To improve the model's predictive accuracy, additional data, such as socioeconomic variables or more detailed health intervention metrics, and more advanced forecasting techniques, may be needed to capture the full scope of the policy's impact on drug-related deaths in the state.

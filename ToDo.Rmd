@@ -32,19 +32,19 @@ output:
 
 ## 5. Confounding Variables
 
-- [ ] **External Factors**: Acknowledge and potentially model the effects of external influences like COVID-19 or socioeconomic factors that might affect the trends.
-- [ ] **Robustness Checks**: Conduct placebo tests by applying the DiD model to pre-2021 periods to ensure the results are not random.
+- [X] **External Factors**: Acknowledge and potentially model the effects of external influences like COVID-19 or socioeconomic factors that might affect the trends.
+- [X] **Robustness Checks**: Conduct placebo tests by applying the DiD model to pre-2021 periods to ensure the results are not random.
 
 ## 6. Visualization
 
-- [ ] **Time-Series Plots**: Create plots to illustrate the changes in drug-related death rates over time across the states.
-- [ ] **Bar Charts**: Visualize the differences in death rates before and after policy changes in Oregon and the other states.
-- [ ] **Geographical Heatmaps**: Display the impact geographically, showing the intensity of drug-related deaths by state.
+- [X] **Time-Series Plots**: Create plots to illustrate the changes in drug-related death rates over time across the states.
+- [X] **Bar Charts**: Visualize the differences in death rates before and after policy changes in Oregon and the other states.
+- [X] ~~**Geographical Heatmaps**: Display the impact geographically, showing the intensity of drug-related deaths by state.~~
 
 ## 7. Model Validation
 
-- [ ] **Alternative Models**: Besides DiD and regression, you can try machine learning models, such as time-series forecasting (e.g., ARIMA) to predict future death trends.
-- [ ] **Cross-Validation**: Validate the models with part of your data (e.g., train on 2018-2022 and validate on 2023-2024).
+- [X] **Alternative Models**: Besides DiD and regression, you can try machine learning models, such as time-series forecasting (e.g., ARIMA) to predict future death trends.
+- [X] **Cross-Validation**: Validate the models with part of your data (e.g., train on 2018-2022 and validate on 2023-2024).
 
 ## 8. Policy Interpretation and Conclusion
 
