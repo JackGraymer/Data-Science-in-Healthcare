@@ -1,7 +1,4 @@
 ---
-title: "DS Healthcare ToDo Layout"
-author: "Cervan, Del Conte, Kunz"
-date: "2024-10-04"
 output:
   pdf_document:
 ---
@@ -31,7 +28,7 @@ output:
 - [ ] **Difference-in-Differences (DiD) Method**: As mentioned in the preliminary study, DiD analysis will help you measure the impact of Oregon’s decriminalization policy. Oregon serves as the "treatment" state, and California and Washington as "control" states.
     - [ ] Compare pre- and post-2021 death rates in Oregon to those of the control states.
     - [ ] Perform subgroup analysis by gender or age if the data allows.
-- [ ] **Regression Discontinuity Analysis**: To further validate the DiD results, you could apply regression discontinuity to the time when the Oregon law was enacted.
+- [x] **Regression Discontinuity Analysis**: To further validate the DiD results, you could apply regression discontinuity to the time when the Oregon law was enacted.
 
 ## 5. Confounding Variables
 
