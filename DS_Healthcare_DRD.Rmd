@@ -11,7 +11,7 @@ output:
 
 # Summary
 
-This study aims to find out if the new "Ballot measure 110" regulation passed in the US state of Oregon in 2020 has had an impact on the number of drug-related deaths in the state. This measure decriminalized the possession of small amounts of drugs such as fentanyl and methamphetamine, among others. The data set used in this study  contains information on the number of drug-related deaths in Oregon and it´s neighbouring states, California and Washington from 2018 to 2024. The data set contains information on the month and year of the, the number, the state and the type of death.
+This study aims to find out if the new "Ballot measure 110" regulation passed in the US state of Oregon in 2020 has had an impact on the number of drug-related deaths in the state. This measure decriminalized the possession of small amounts of drugs such as fentanyl and methamphetamine, among others. The data set used in this study  contains information on the number of drug-related deaths in Oregon and it´s neighbouring states, California and Washington from 2018 to 2024. Furthermore contains information on the month and year of the death, the number of deaths, the state and the type of death.For the population, the sex is also included.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -38,11 +38,9 @@ getwd()
 ```
 
 
-The data set used in this study contains information on drug-related deaths in Oregon, California, and Washington from 2018 to 2024. The data set includes the month and year of the death, the number of deaths, the state where the death occurred, and the type of death. For the population, the sex is also included.
-
 For privacy reasons, the data set does not contain any personal information about the deceased individuals. Furthermore, in instances where the number of deaths is less than 10, the data is marked as "Suppressed" to protect the privacy of the individuals.
 
-Also, to enrich the data with population information, we have a separate data set that contains the population counts for each state and year from 2010 to 2023.
+Also, to enrich the data with population information, a separate data set that contains the population counts for each state and year from 2010 to 2023 is used.
 
 ```{r load main dataset, include=FALSE}
 # load the relevant part of the Data set, exclude notes starting from row 4374
