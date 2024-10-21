@@ -15,6 +15,8 @@ output:
 
 This study aims to find out if the new "Ballot measure 110" regulation passed in the US state of Oregon in 2020 has had an impact on the number of drug-related deaths in the state. This measure decriminalized the possession of small amounts of drugs such as fentanyl and methamphetamine, among others. The data set used in this study  contains information on the number of drug-related deaths in Oregon and it´s neighbouring states, California and Washington from 2018 to 2024. Furthermore contains information on the month and year of the death, the number of deaths, the state and the type of death.For the population, the sex is also included.
 
+The analysis is divided into several parts. First, we will conduct a baseline and trend analysis to understand the general situation of drug-related deaths in the three states. We will then focus on the years 2018-2020 to establish pre-existing trends before the policy change. Next, we will perform a Difference-in-Differences (DiD) analysis to estimate the impact of the policy change on drug-related deaths in Oregon compared to California and Washington. The hypothesis of the study is that the decriminalization policy in Oregon led to an increase in drug-related deaths compared to the control states. We will also conduct a sensitivity analysis to test the robustness of our results using alternative control groups. Finally, we will explore the potential impact of confounding variables such as the COVID-19 pandemic and socioeconomic factors on drug-related deaths.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -32,10 +34,6 @@ library(lmtest)
 library(sandwich)
 library(forecast)
 library(plm)
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 
 #globally exclude code chunks from the output
 knitr::opts_chunk$set(echo = FALSE)
@@ -167,7 +165,7 @@ Dates were converted to a standardized format using lubridate package. The colum
 
 Enriched with a *Provisional* column, which indicates whether the data is provisional or not. This information was extracted from the *Month* column.
 
-```{r Data Explorations, echo=TRUE}
+```{r Data Explorations, include=FALSE}
 
 # look into Dates 
 unique(Data$Month)
@@ -266,8 +264,9 @@ ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occur
 
 ## Difference by Gender
 ```{r Difference by Gender}
-# Prepare the data
+# Prepare the data untill 2023
 data_gender_year <- Data %>%
+  filter(`Month` >= ym("2018-01") & `Month` <= ym("2023-12")) %>%
   select(Gender, Month, Deaths) %>%
   group_by(Gender, Month) %>%
   summarise(Total_Deaths = sum(Deaths, na.rm = TRUE)) %>%
@@ -287,9 +286,9 @@ t.test(Total_Deaths ~ Gender, data = data_gender_year)
 
 ```
 
-The Welch two-sample t-test results indicate a statistically significant difference in drug-related deaths between males and females. The test produced a t-statistic of -13.287 with 93.404 degrees of freedom and a p-value less than 2.2e-16, which is well below the common significance threshold of 0.05. This strongly suggests that the difference in means between the two groups is not due to random chance.
+The Welch two-sample t-test results indicate a statistically significant difference in drug-related deaths between males and females. The test produced a t-statistic of -16.223 with 80.421 degrees of freedom and a p-value less than 2.2e-16, which is well below the common significance threshold of 0.05. This strongly suggests that the difference in means between the two groups is not due to random chance.
 
-The mean number of drug-related deaths in the female group is 282.94, while the mean in the male group is significantly higher at 761.59. The 95% confidence interval for the difference in means ranges from -550.18 to -407.12, further confirming that male drug-related deaths are significantly higher than female deaths.
+The mean number of drug-related deaths in the female group is 299.24, while the mean in the male group is significantly higher at 803.35. The 95% confidence interval for the difference in means ranges from -565.95 to -442.28, further confirming that male drug-related deaths are significantly higher than female deaths.
 
 In conclusion, the analysis shows a highly significant difference in drug-related deaths between males and females, with males experiencing a considerably higher number of deaths on average.
 
@@ -343,7 +342,10 @@ The effect of Occurrence State on drug-related deaths is not significant (F(2, 1
 The interaction between Gender and Occurrence State is also not significant (F(2, 120) = 2.27, p = .11). Therefore, it is assumed that the effect of gender on drug-related deaths does not vary significantly depending on the occurrence state.
 
 # TODO For this Analyis we wanted to look at the monthly numbers
+
 ## Difference-in-Differences (DiD) Analysis
+
+The Difference-in-Differences (DiD) analysis aims to estimate the causal effect of Oregon’s decriminalization policy on drug-related deaths by comparing the changes in death rates in Oregon to those in California and Washington. By creating a treatment group (Oregon) and control group (California and Washington) and analyzing the pre- and post-policy trends, we can isolate the policy’s impact from other factors. The DiD model will help quantify the additional increase in deaths in Oregon following the policy change compared to the control states.
 
 ```{r Diference In Differences Analysis}
 
@@ -392,7 +394,6 @@ coeftest(did_model, vcov = vcovHC(did_model, type = "HC1"))
 The **intercept** represents the baseline level of drug-related deaths per 100,000 in the control states (California and Washington) before the policy change, at 2.27 deaths per 100,000 inhabitants. The **treatment** coefficient of 0.24 indicates a slightly higher pre-policy death rate in Oregon compared to the control states, though this difference is not statistically significant (p = 0.1938). The **post-policy** coefficient of 1.73 indicates a significant overall increase in drug-related deaths across all states after 2021 (p < 2e-16). 
 
 The **interaction term**, which captures the policy effect in Oregon relative to the control states, shows an additional increase of 0.55 deaths per 100,000 (p = 0.0379), suggesting that Oregon experienced a greater increase in deaths following the policy change compared to California and Washington. The model explains 55.31% of the variation in deaths (R-squared = 0.5531).
-
 
 ```{r Plot DiD}
 # Plot DiD Results
@@ -483,14 +484,22 @@ did_model_placebo <- lm(Deaths_per_100000 ~ treatment + post_policy + interactio
 summary(did_model_placebo)
 
 # Robust standard errors for the placebo test
-coeftest(did_model_placebo, vcov = vcovHC(did_model_placebo, type = "HC1"))
+#coeftest(did_model_placebo, vcov = vcovHC(did_model_placebo, type = "HC1"))
+
+# Plot the placebo test results
+ggplot(Data_placebo, aes(x = date, y = Deaths_per_100000, color = `Occurrence State`)) +
+  geom_line(linewidth = 1.2) +
+  geom_vline(xintercept = as.Date("2019-01-01"), linetype = "dashed", color = "red") +  # Mark the placebo policy change
+  labs(title = "Placebo Test: Drug-Related Deaths per 100,000 Inhabitants",
+       subtitle = "Fictitious Policy Change in 2019",
+       x = "Year", y = "Deaths per 100,000 inhabitants")
 ```
 
-The results of the placebo test using a Difference-in-Differences (DiD) model show that the interaction term (policy effect) is not statistically significant (Estimate = 0.59, p = 0.92). This indicates that there is no meaningful effect of the "fictitious" policy change in the pre-treatment period (2018-2020).
+The placebo test using a Difference-in-Differences (DiD) model was conducted to assess whether a fictitious policy change in 2019 would have influenced drug-related deaths in Oregon, California, and Washington between 2018 and 2020. The results indicate that the interaction term between the treatment group (Oregon) and the placebo policy change is not statistically significant (*Estimate = 0.01277, p = 0.956*), suggesting no meaningful difference in the trend of drug-related deaths between Oregon and the control states (California and Washington) during this period. This lack of a significant effect supports the validity of the original analysis by showing that no artificial policy effect was observed before the actual 2021 policy change.
 
-The lack of a significant effect in this placebo test suggests that the actual policy change in 2021 is likely responsible for the observed increase in drug-related deaths, as there is no similar effect before the real policy was implemented. Additionally, the model shows that the treatment variable (Oregon) has a significant positive coefficient (Estimate = 20.62, p < 0.001), indicating that Oregon had higher baseline drug-related death rates compared to the control states (California and Washington) even before the policy change. However, the non-significant interaction term supports the conclusion that no random changes occurred in the placebo period.
+The significant effect of the post-policy variable (*Estimate = 0.516, p = 0.0002*) likely reflects overall trends in drug-related deaths over time, rather than any placebo policy effect. The treatment variable for Oregon was not significant (*p = 0.223*), meaning Oregon’s baseline death rates were not significantly different from those of California and Washington during this period.
 
-This placebo test strengthens the validity of the original findings, suggesting that the observed policy effect is not due to random fluctuations but rather the actual decriminalization policy implemented in 2021.
+The placebo test confirms no significant artificial effects before the 2021 policy change, strengthening the validity of the original analysis. This suggests that the 2021 policy is likely responsible for the observed increase in drug-related deaths, reinforcing its meaningful impact.
 
 ### Regression Discontinuity Analysis
 
@@ -528,29 +537,11 @@ ggplot(Data_RD, aes(x = date, y = Deaths_per_100000, color = as.factor(policy_ch
 
 The regression discontinuity analysis indicates a significant increase in drug-related deaths following Oregon’s 2021 decriminalization policy. The updated model estimates an increase of approximately 2.25 deaths per 100,000 inhabitants after the policy change, with a highly significant p-value (p < 0.001), reinforcing the strong association between the policy and the rise in drug-related deaths. The model explains approximately 68% of the variance in deaths (R-squared = 0.6795). This suggests that the policy change accounts for a substantial portion of the observed increase in drug-related deaths. However, the remaining variance (about 32%) implies that other factors, such as external events or systemic issues, may still be influencing these trends. The relatively small residual standard error (0.7836) indicates that the model fits the data well, but further analysis is required to account for additional variables and potential long-term impacts of the policy change.
 
-## Confounding Variables
-
-### External Factors
-
-When interpreting the results of our analysis, it is crucial to consider the potential impact of external factors that might confound the observed trends in drug-related deaths. Two significant external influences that could affect our results are the COVID-19 pandemic and various socioeconomic factors.
-
-#### COVID-19 Pandemic
-
-The COVID-19 pandemic, which began in early 2020, has had widespread and profound impacts on public health, economic stability, and social behaviors. The pandemic could have influenced drug-related deaths in several ways. The healthcare system strain during the pandemic potentially limited access to addiction treatment and other healthcare services. Increased stress, anxiety, and isolation during the pandemic may have led to higher substance use and overdose rates. Job losses and economic instability could have exacerbated substance abuse issues. Temporary changes in drug policy and law enforcement practices during the pandemic might have affected drug availability and usage patterns.
-
-To account for the potential impact of COVID-19, we could include additional variables in our model, such as monthly COVID-19 case rates, unemployment rates, or other relevant indicators. This would help isolate the effect of the decriminalization policy from the broader impacts of the pandemic.
-
-#### Socioeconomic Factors
-
-Socioeconomic factors, such as income levels, employment rates, education, and housing stability, can significantly influence drug-related behaviors and health outcomes. Variations in these factors across states and over time could confound our analysis. Economic downturns or improvements can affect substance use patterns and access to treatment. Education levels might influence awareness and behaviors related to drug use and health. Homelessness or unstable housing situations can increase vulnerability to substance abuse and overdose.
-
-Incorporating socioeconomic data into our analysis could provide a more nuanced understanding of the trends in drug-related deaths. We could use publicly available datasets to obtain state-level indicators of these factors and include them as covariates in our regression models.
-
 ## Time-series forecasting (ARIMA)
 
 To predict future trends in drug-related deaths, we can use time-series forecasting models such as Autoregressive Integrated Moving Average (ARIMA). By fitting an ARIMA model to the historical data, we can generate forecasts for the upcoming years and assess the potential impact of the policy change on future death rates.
 
-```{r Time-Series Forecasting ARIMA-2}
+```{r Time-Series Forecasting ARIMA}
 # Filter the data for Oregon and clean it
 data_oregon <- Data %>%
   filter(`Occurrence State` == "Oregon") %>%
@@ -588,7 +579,7 @@ forecast_2025 <- forecast(full_arima_model, h = 12)
 plot(forecast_2025, main = "Forecast for Drug-Related Deaths in Oregon (2025)",
      xlab = "Year", ylab = "Deaths per 100,000 inhabitants")
 
-```	
+```
 
 The ARIMA model was trained on Oregon’s drug-related death data from 2018 to 2022 and validated using 2023 data. In the training set, the model exhibited a small bias, with a Mean Error (ME) of -0.11, indicating a slight underestimation of deaths. The Root Mean Squared Error (RMSE) of 5.32 and Mean Absolute Error (MAE) of 4.34 show moderate accuracy in predicting the actual values, though the model's tendency to under-predict is reflected in the Mean Percentage Error (MPE) of -31.75%. When validated on the 2023 test set, the model's performance slightly worsened, with an RMSE of 8.09 and MAPE of 22.89%, showing the forecasts deviated by an average of 22.89% from the actual data. Despite this, the model outperformed a naive forecast (Theil’s U = 0.85), suggesting that while it provides reasonable accuracy, further refinements are needed to improve predictions, particularly for future periods like 2025.
 
@@ -654,3 +645,34 @@ ggplot(panel_data_with_fitted, aes(x = date, y = Deaths_per_100000, color = Stat
            color = "State") +
       theme_minimal()
 ```
+
+The panel data analysis provides a comprehensive view of the impact of the policy change on drug-related deaths in Oregon. The model estimates the effect of the policy by comparing the current death rate with the lagged death rate, accounting for state-specific trends and variations. The results show a significant positive coefficient for the lagged death rate, indicating a strong association between past and current death rates. This suggests that the policy change may have influenced the trajectory of drug-related deaths in Oregon, as reflected in the model's predictions.
+
+The fitted values from the panel data model align closely with the actual death rates, indicating that the model effectively captures the underlying patterns in the data. The visual representation of the model results shows the actual death rates (solid lines) and the fitted values (dashed lines) for each state over time. The close alignment between the two lines demonstrates the model's ability to predict the observed trends accurately.
+
+## Confounding Variables
+
+### External Factors
+
+When interpreting the results of our analysis, it is crucial to consider the potential impact of external factors that might confound the observed trends in drug-related deaths. Two significant external influences that could affect our results are the COVID-19 pandemic and various socioeconomic factors.
+
+#### COVID-19 Pandemic
+
+The COVID-19 pandemic, which began in early 2020, has had widespread and profound impacts on public health, economic stability, and social behaviors. The pandemic could have influenced drug-related deaths in several ways. The healthcare system strain during the pandemic potentially limited access to addiction treatment and other healthcare services. Increased stress, anxiety, and isolation during the pandemic may have led to higher substance use and overdose rates. Job losses and economic instability could have exacerbated substance abuse issues. Temporary changes in drug policy and law enforcement practices during the pandemic might have affected drug availability and usage patterns.
+
+To account for the potential impact of COVID-19, we could include additional variables in our model, such as monthly COVID-19 case rates, unemployment rates, or other relevant indicators. This would help isolate the effect of the decriminalization policy from the broader impacts of the pandemic.
+
+#### Socioeconomic Factors
+
+Socioeconomic factors, such as income levels, employment rates, education, and housing stability, can significantly influence drug-related behaviors and health outcomes. Variations in these factors across states and over time could confound our analysis. Economic downturns or improvements can affect substance use patterns and access to treatment. Education levels might influence awareness and behaviors related to drug use and health. Homelessness or unstable housing situations can increase vulnerability to substance abuse and overdose.
+
+Incorporating socioeconomic data into our analysis could provide a more nuanced understanding of the trends in drug-related deaths. We could use publicly available datasets to obtain state-level indicators of these factors and include them as covariates in our regression models.
+
+
+# Conclusion
+
+The analysis of drug-related deaths in Oregon before and after the 2021 decriminalization policy change reveals a significant increase in deaths following the policy implementation. The Difference-in-Differences (DiD) analysis, Regression Discontinuity Analysis, and Panel Data Analysis all support the conclusion that the policy change had a measurable impact on drug-related deaths in Oregon. The ARIMA time-series forecasting model provides insights into future trends, highlighting the need for ongoing monitoring and intervention to address the rising death rates.
+
+While the results suggest a causal relationship between the policy change and increased deaths, it is essential to consider external factors such as the COVID-19 pandemic and socioeconomic influences that may confound the analysis. By incorporating additional variables and refining the models, future research can provide a more nuanced understanding of the complex dynamics underlying drug-related deaths and inform targeted interventions to mitigate the adverse effects of substance abuse.
+
+The findings from this analysis contribute to the broader discourse on drug policy reform and public health strategies, emphasizing the importance of evidence-based approaches to address the complex challenges of substance abuse and overdose prevention. By leveraging data-driven insights and rigorous analytical methods, policymakers and healthcare professionals can develop effective interventions to support individuals struggling with addiction and reduce the burden of drug-related deaths on communities.
