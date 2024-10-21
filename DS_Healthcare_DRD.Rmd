@@ -32,6 +32,10 @@ library(lmtest)
 library(sandwich)
 library(forecast)
 library(plm)
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 
 #globally exclude code chunks from the output
 knitr::opts_chunk$set(echo = FALSE)
@@ -73,13 +77,13 @@ str(Data)
 population_oregon_1 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
                                   sheet = "Oregon", 
                                   range = "D244:M244", 
-                                  col_names = FALSE)  # Disable header reading
+                                  col_names = FALSE)  
 
 # Load the population data from the second range (Q244:T244)
 population_oregon_2 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
                                   sheet = "Oregon", 
                                   range = "Q244:T244", 
-                                  col_names = FALSE)  # Disable header reading
+                                  col_names = FALSE)  
 
 # Combine the two data frames (horizontally) into one row
 population_oregon <- cbind(population_oregon_1, population_oregon_2)
@@ -93,13 +97,13 @@ colnames(population_oregon) <- 2010:2023
 population_california_1 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
                                   sheet = "California", 
                                   range = "D487:M487", 
-                                  col_names = FALSE)  # Disable header reading
+                                  col_names = FALSE)  
 
 # Load the population data from the second range (Q487:T487)
 population_california_2 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
                                   sheet = "California", 
                                   range = "Q487:T487", 
-                                  col_names = FALSE)  # Disable header reading
+                                  col_names = FALSE)  
 
 # Combine the two data frames (horizontally) into one row
 population_california <- cbind(population_california_1, population_california_2)
@@ -113,13 +117,13 @@ colnames(population_california) <- 2010:2023
 population_washington_1 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
                                   sheet = "Washington", 
                                   range = "D286:M286", 
-                                  col_names = FALSE)  # Disable header reading
+                                  col_names = FALSE)  
 
 # Load the population data from the second range 
 population_washington_2 <- read_excel("data/Ca_Or_Wa Population 2010-23.xlsx", 
                                   sheet = "Washington", 
                                   range = "Q286:T286", 
-                                  col_names = FALSE)  # Disable header reading
+                                  col_names = FALSE)  
 
 # Combine the two data frames (horizontally) into one row
 population_washington <- cbind(population_washington_1, population_washington_2)
@@ -363,8 +367,52 @@ ggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +
        subtitle = "Oregon vs Control States",
        x = "Date", y = "Predicted Deaths per 100,000 inhabitants")
 ```
+```{r Sensitivity Analysis, Correlation Check, and DiD with Alternative Control Groups}
+# Subset data for Oregon and Washington
+oregon_data <- Data_monthly %>% filter(`Occurrence State` == "Oregon")
+washington_data <- Data_monthly %>% filter(`Occurrence State` == "Washington")
 
-### Robustness Check (Placebo Test)
+
+# Calculate the correlation coefficient between the two states
+correlation <- cor(oregon_data$Deaths_per_100000, washington_data$Deaths_per_100000)
+
+# Print the result
+correlation
+
+#Seperate DiD
+
+# Example for DiD with only California as control
+did_model_california <- lm(Deaths_per_100000 ~ treatment + post_policy + interaction, 
+                           data = Data_monthly %>% filter(`Occurrence State` %in% c("Oregon", "California")))
+
+# Example for DiD with only Washington as control
+did_model_washington <- lm(Deaths_per_100000 ~ treatment + post_policy + interaction, 
+                           data = Data_monthly %>% filter(`Occurrence State` %in% c("Oregon", "Washington")))
+
+# Compare the results
+summary(did_model_california)
+summary(did_model_washington)
+
+
+
+```
+In this analysis, we ran two separate Difference-in-Differences (DiD) models to assess the impact of Oregon’s decriminalization policy on drug-related deaths per 100,000 inhabitants, using California and Washington as individual control groups. This decision was prompted by the discovery of a high correlation (0.95) between drug-related death trends in Oregon and Washington, which raised concerns about whether Washington was an appropriate control.
+
+The results show markedly different outcomes depending on whether California or Washington is used as the control group:
+
+*Using California as the control*:
+The interaction term is highly significant, showing that Oregon experienced a substantial additional increase in drug-related deaths following the policy change relative to California.
+This supports the hypothesis that Oregon’s decriminalization policy had a measurable impact on drug-related deaths.
+
+*Using Washington as the control*:
+The interaction term is not significant, indicating no meaningful difference in the increase of drug-related deaths between Oregon and Washington after the policy. This suggests that Oregon’s policy may not have had a distinct effect when compared to Washington. 
+
+The high correlation between Oregon and Washington suggests that Washington is not an ideal control, as both states followed highly similar pre-policy trends. As a result, using Washington alone as a control underestimates the policy’s effect. On the other hand, using California, which had a different baseline and trend, highlights a significant impact of the policy.
+
+Given these findings, the analysis supports using both California and Washington together as controls to balance the influence of broader national trends (represented by California) with regional factors (represented by Washington).
+
+
+### Robustness Check (Placebo Test) *(Maybe Not Needed anymore)*
 
 To ensure the robustness of our findings,  Placebo tests will be applied by using the Difference-in-Differences (DiD) model to periods before the policy change (e.g., using a fictitious policy change date) to check if similar trends are observed. This helps confirm that the observed effects are not due to random fluctuations. If the placebo test shows no significant impact, it strengthens the validity of the actual policy analysis.
 
@@ -502,26 +550,23 @@ These results imply that drug-related deaths in Oregon post-2021 may be influenc
 ```{r Panel Data Analysis}
 # Panel Data Analysis
 # Create a panel data set for the analysis
-panel_data <- Data %>%
-  select(`Occurrence State`, Month, Deaths) %>%
+panel_data <- Data_monthly %>%
+  select(`Occurrence State`, date, Deaths_per_100000) %>%
   mutate(State = factor(`Occurrence State`)) %>%
-  select(-`Occurrence State`) %>%
-  rename(Date = Month)
+  select(-`Occurrence State`)
 
-# Convert the Date column to a proper date format
-panel_data$Date <- as.Date(paste0(panel_data$Date, "-01"))
 
 # Aggregate the data to ensure unique state and date combinations
 panel_data <- panel_data %>%
-  group_by(State, Date) %>%
-  summarise(Deaths = sum(Deaths, na.rm = TRUE)) %>%
+  group_by(State, date) %>%
+  summarise(Deaths_per_100000 = sum(Deaths_per_100000, na.rm = TRUE)) %>%
   ungroup()
 
 # Convert the data to a pdata.frame
-pdata <- pdata.frame(panel_data, index = c("State", "Date"))
+pdata <- pdata.frame(panel_data, index = c("State", "date"))
 
 # Fit a panel data model to assess the impact of the policy change
-panel_model <- plm(Deaths ~ lag(Deaths, 1), data = pdata, model = "within")
+panel_model <- plm(Deaths_per_100000 ~ lag(Deaths_per_100000, 1), data = pdata, model = "within")
 
 # Summarize the model
 summary(panel_model)
@@ -534,29 +579,29 @@ model_index <- index(panel_model)
 
 # Create a dataframe with fitted values and corresponding index (State, Date)
 fitted_data <- data.frame(State = model_index$State,
-                          Date = model_index$Date,
+                          date = model_index$date,
                           Fitted = fitted(panel_model))
 
 # Merge the fitted data with the original panel_data based on State and Date
-panel_data_with_fitted <- merge(panel_data, fitted_data, by = c("State", "Date"))
+panel_data_with_fitted <- merge(panel_data, fitted_data, by = c("State", "date"))
 
 # Plot the panel data model results using ggplot2
-ggplot(panel_data_with_fitted, aes(x = Date, y = Deaths, color = State)) +
+ggplot(panel_data_with_fitted, aes(x = date, y = Deaths_per_100000, color = State)) +
   geom_point() +
-  geom_line(aes(y = Deaths), linetype = "solid") +  # Plot actual Deaths as solid line
+  geom_line(aes(y = Deaths_per_100000), linetype = "solid") +  # Plot actual Deaths_per_100000 as solid line
   labs(title = "Panel Data Model Results",
        x = "Date",
-       y = "Deaths",
+       y = "Deaths_per_100000",
        color = "State") +
   theme_minimal()
 
-        ggplot(panel_data_with_fitted, aes(x = Date, y = Deaths, color = State)) +
+        ggplot(panel_data_with_fitted, aes(x = date, y = Deaths_per_100000, color = State)) +
       geom_point() +
-      geom_line(aes(y = Deaths), linetype = "solid") +  # Plot actual Deaths as solid line
+      geom_line(aes(y = Deaths_per_100000), linetype = "solid") +  # Plot actual Deaths_per_100000 as solid line
       geom_line(aes(y = Fitted), linetype = "dashed") +  # Plot fitted values as dashed line
       labs(title = "Panel Data Model Results",
-           x = "Date",
-           y = "Deaths",
+           x = "date",
+           y = "Deaths_per_100000",
            color = "State") +
       theme_minimal()
 ```
