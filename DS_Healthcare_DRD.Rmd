@@ -297,7 +297,7 @@ In conclusion, the analysis shows a highly significant difference in drug-relate
 # Prepare the data
 #use quarterly data to make it smoother
 data_Anova <- Data %>%
-  filter(`Month` < ym("2023-02")) %>%
+  filter(`Month` < ym("2021-02")) %>%
   mutate(Quarter = floor_date(as.Date(Month), "quarter")) %>%    
   select(Gender, Quarter, `Occurrence State`, Deaths) %>%
   group_by(Gender, Quarter, `Occurrence State`) %>%
@@ -305,7 +305,7 @@ data_Anova <- Data %>%
   ungroup()
 
 data_Anova$all_death <- Data_complete %>%
-  filter(`Month` < ym("2023-02")) %>%
+  filter(`Month` < ym("2021-02")) %>%
   mutate(Quarter = floor_date(as.Date(Month), "quarter")) %>%
   select(Gender, Quarter, `Occurrence State`, Deaths) %>%
   group_by(Gender, Quarter, `Occurrence State`) %>%
@@ -330,16 +330,17 @@ data_Anova <- data_Anova %>%
          `Occurrence State` = as.factor(`Occurrence State`))
 
 # Test for effects in Gender, State and interactions
-anova_model <- aov(DrugDeath_Percentage ~ Gender * `Occurrence State`, data = data_Anova)
+anova_model <- aov(DrugDeath_Percentage ~ Gender + `Occurrence State`, data = data_Anova)
 
 summary(anova_model)
 
 ```
-The results of the Two-Way ANOVA for the period prior to the implementation of the law indicate a statistically significant difference in drug-related deaths between males and females (F(1, 120) = 182.13, p < .001). This strongly suggests that the difference in means between the two groups is not due to random chance; in general, men are more likely to die from drug-related causes than women.
+The results of the Two-Way ANOVA for the period prior to the implementation of the law indicate a statistically significant difference in drug-related deaths between males and females (F(1, 74) = 201.28, p < .001). This strongly suggests that the difference in means between the two groups is not due to random chance; in general, men are more likely to die from drug-related causes than women.
 
-The effect of Occurrence State on drug-related deaths is not significant (F(2, 120) = 2.51, p = .09). The p-value is just above the conventional threshold of .05, indicating that there may be a trend that warrants further investigation.
+The effect of Occurrence State on drug-related deaths is not significant (F(2, 74) = 2.62, p = .08). The p-value is just above the conventional threshold of .05, indicating that there may be a trend that warrants further investigation. Further analysis could clarify potential differences in drug-related deaths across various Occurrence States.
 
-The interaction between Gender and Occurrence State is also not significant (F(2, 120) = 2.27, p = .11). Therefore, it is assumed that the effect of gender on drug-related deaths does not vary significantly depending on the occurrence state.
+These findings highlight the importance of addressing gender-specific factors in public health initiatives aimed at reducing drug-related deaths. Future research should consider additional variables such as socioeconomic status or access to healthcare services to gain a more comprehensive understanding of the factors influencing drug-related deaths.
+
 
 # TODO For this Analyis we wanted to look at the monthly numbers
 
