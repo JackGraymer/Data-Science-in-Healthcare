@@ -28,6 +28,7 @@ library(ggplot2)
 library(tidyr)
 library(lmtest)
 library(sandwich)
+library(forecast)
 
 #globally exclude code chunks from the output
 knitr::opts_chunk$set(echo = FALSE)
@@ -161,13 +162,7 @@ Enriched with a *Provisional* column, which indicates whether the data is provis
 
 ```{r Data Explorations, include=FALSE}
 
-# look into Notes
-unique(Data$Notes)
-
-# only NA's so we delete this column
-Data <- Data %>% select(-Notes)
-
-# look into Dates
+# look into Dates 
 unique(Data$Month)
 
 # Delete Row Sep., 2024 since the data is not complete
@@ -206,6 +201,9 @@ summary(Data)
 sum(Data$Deaths == "Suppressed")
 # Delete all columns that end on Code, they are duplicates of the other columns
 Data <- Data[, !grepl("Code$", names(Data))]
+
+# keep one version of the Dataset with all Deaths
+Data_complete <- Data
 
 # Filters the data to only include drug-induced deaths (removes alcohol-induced and non-drug related deaths)
 Data <- Data %>% filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes")
@@ -302,19 +300,9 @@ coeftest(did_model, vcov = vcovHC(did_model, type = "HC1"))
 
 ```
 ## Model interpretation
-In this analysis, a **Difference-in-Differences (DiD)** model was applied to evaluate the impact of Oregon's decriminalization policy on drug-related deaths. Three key variables were included in the model:
+The **intercept** represents the baseline level of drug-related deaths per 100,000 in the control states (California and Washington) before the policy change, at 2.27 deaths per 100,000 inhabitants. The **treatment** coefficient of 0.24 indicates a slightly higher pre-policy death rate in Oregon compared to the control states, though this difference is not statistically significant (p = 0.1938). The **post-policy** coefficient of 1.73 indicates a significant overall increase in drug-related deaths across all states after 2021 (p < 2e-16). 
 
-1. **Treatment**: This variable identifies whether a state is part of the treatment group. In this case, Oregon was assigned a value of 1 (treatment group), while California and Washington, which served as control states, were assigned a value of 0.
-   
-2. **Post-policy**: This variable distinguishes the period before and after the policy change. It takes a value of 1 for observations from 2021 and later (post-policy period), and 0 for years prior to the policy implementation.
-   
-3. **Interaction**: The interaction term between the treatment and post-policy variables captures the key DiD effect. This term measures the change in the outcome (deaths per 100,000 inhabitants) in Oregon after the policy change, relative to the trends in the control states.
-
-#### Key Coefficients:
-- The **intercept** (85.849) represents the baseline level of drug-related deaths per 100,000 in the control states (California and Washington) before the policy change.
-- The **treatment coefficient** (21.017) indicates that, before the policy change, Oregon had 21.017 more deaths per 100,000 compared to the control states.
-- The **post-policy coefficient** (9.759) shows that, on average, across all states, drug-related deaths increased by 9.759 per 100,000 after 2021, regardless of the policy.
-- The **interaction coefficient** (6.033) represents the estimated effect of the policy in Oregon, showing that the increase in deaths per 100,000 in Oregon after the policy change was 6.033 higher than the increase observed in the control states. However, this effect was not statistically significant (p-value = 0.184), suggesting that there is insufficient evidence to conclude that the policy had a meaningful impact on the outcome.
+The **interaction term**, which captures the policy effect in Oregon relative to the control states, shows an additional increase of 0.55 deaths per 100,000 (p = 0.0379), suggesting that Oregon experienced a greater increase in deaths following the policy change compared to California and Washington. The model explains 55.31% of the variation in deaths (R-squared = 0.5531).
 
 
 ```{r Plot}
@@ -428,14 +416,12 @@ This placebo test strengthens the validity of the original findings, suggesting 
 To predict future trends in drug-related deaths, we can use time-series forecasting models such as Autoregressive Integrated Moving Average (ARIMA). By fitting an ARIMA model to the historical data, we can generate forecasts for the upcoming years and assess the potential impact of the policy change on future death rates.
 
 ```{r Time-Series Forecasting ARIMA-2}
-# Assuming data is loaded into a dataframe `Data`
-library(dplyr)
-library(forecast)
+
 
 # Filter the data for Oregon and clean it
 data_oregon <- Data %>%
   filter(`Occurrence State` == "Oregon") %>%
-  filter(!Deaths == "Suppressed") %>%   # Handle suppressed values (remove them for now)
+  filter(!Deaths == "Suppressed") %>%   # Handle suppressed values (remove them for now) 
   mutate(Deaths = as.numeric(Deaths),    # Convert Deaths to numeric
          date = as.Date(paste0(Month, "-01")))  # Create a proper date column
 
