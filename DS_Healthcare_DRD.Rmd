@@ -4,10 +4,12 @@ author: "Cervan, Del Conte, Kunz"
 date: "2024-10-04"
 output:
   pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true    
+    number_sections: true
 ---
+
+\newpage
+\tableofcontents
+\newpage
 
 # Summary
 
@@ -160,10 +162,13 @@ Dates were converted to a standardized format using lubridate package. The colum
 
 Enriched with a *Provisional* column, which indicates whether the data is provisional or not. This information was extracted from the *Month* column.
 
-```{r Data Explorations, include=FALSE}
+```{r Data Explorations, echo=TRUE}
 
 # look into Dates 
 unique(Data$Month)
+
+# Delete Notes column without grepl 
+Data <- Data[, !grepl("Notes", names(Data))]
 
 # Delete Row Sep., 2024 since the data is not complete
 Data <- Data[Data$Month != "Sep., 2024 (provisional and partial)", ]
@@ -211,7 +216,7 @@ Data <- Data %>% filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes")
 glimpse(Data)
 ```
 
-# Exploratory Data Analysis
+# Analysis
 
 ## Baseline and Trend Analysis
 We will calculate the drug-related death rates for Oregon, California, and Washington for all complete years in our dataset to have an overview of the situation. We then focus on the years 2018-2020 prior to the law’s enactment, to establish any pre-existing trends. 
@@ -254,7 +259,8 @@ ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occur
        x = "Year", y = "Deaths per 100,000 inhabitants")
 ```
 
-# For this Analyis we wanted to look at the monthly numbers
+# TODO For this Analyis we wanted to look at the monthly numbers
+## Difference-in-Differences (DiD) Analysis
 
 ```{r Diference In Differences Analysis}
 
@@ -299,14 +305,14 @@ summary(did_model)
 coeftest(did_model, vcov = vcovHC(did_model, type = "HC1"))
 
 ```
-## Model interpretation
+
 The **intercept** represents the baseline level of drug-related deaths per 100,000 in the control states (California and Washington) before the policy change, at 2.27 deaths per 100,000 inhabitants. The **treatment** coefficient of 0.24 indicates a slightly higher pre-policy death rate in Oregon compared to the control states, though this difference is not statistically significant (p = 0.1938). The **post-policy** coefficient of 1.73 indicates a significant overall increase in drug-related deaths across all states after 2021 (p < 2e-16). 
 
 The **interaction term**, which captures the policy effect in Oregon relative to the control states, shows an additional increase of 0.55 deaths per 100,000 (p = 0.0379), suggesting that Oregon experienced a greater increase in deaths following the policy change compared to California and Washington. The model explains 55.31% of the variation in deaths (R-squared = 0.5531).
 
 
-```{r Plot}
-
+```{r Plot DiD}
+# Plot DiD Results
 # Plot the trends over time for each state
 ggplot(Data_monthly, aes(x = date, y = Deaths_per_100000, color = `Occurrence State`)) +
   geom_line(linewidth = 1.2) +
@@ -328,7 +334,40 @@ ggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +
        x = "Date", y = "Predicted Deaths per 100,000 inhabitants")
 ```
 
+### Robustness Check (Placebo Test)
+
+To ensure the robustness of our findings,  Placebo tests will be applied by using the Difference-in-Differences (DiD) model to periods before the policy change (e.g., using a fictitious policy change date) to check if similar trends are observed. This helps confirm that the observed effects are not due to random fluctuations. If the placebo test shows no significant impact, it strengthens the validity of the actual policy analysis.
+
+```{r Robustness Checks}
+# Make a Difference-in-Differences model for the years 2018-2020 as a placebo test
+Data_placebo <- Data_monthly %>%
+  filter(date >= as.Date("2018-01-01") & date <= as.Date("2020-12-01"))
+
+# Create 'treatment' and 'post_policy' variables for the placebo test
+Data_placebo <- Data_placebo %>%
+  mutate(
+    treatment = ifelse(`Occurrence State` == "Oregon", 1, 0),  # 1 for Oregon, 0 for California/Washington
+    post_policy = ifelse(year >= 2019, 1, 0),  # 1 for years 2019 and later
+    interaction = treatment * post_policy  # Interaction term for DiD
+  )
+
+# Difference-in-Differences (DiD) model for the placebo test
+did_model_placebo <- lm(Deaths_per_100000 ~ treatment + post_policy + interaction, data = Data_placebo)
+summary(did_model_placebo)
+
+# Robust standard errors for the placebo test
+coeftest(did_model_placebo, vcov = vcovHC(did_model_placebo, type = "HC1"))
+```
+
+The results of the placebo test using a Difference-in-Differences (DiD) model show that the interaction term (policy effect) is not statistically significant (Estimate = 0.59, p = 0.92). This indicates that there is no meaningful effect of the "fictitious" policy change in the pre-treatment period (2018-2020).
+
+The lack of a significant effect in this placebo test suggests that the actual policy change in 2021 is likely responsible for the observed increase in drug-related deaths, as there is no similar effect before the real policy was implemented. Additionally, the model shows that the treatment variable (Oregon) has a significant positive coefficient (Estimate = 20.62, p < 0.001), indicating that Oregon had higher baseline drug-related death rates compared to the control states (California and Washington) even before the policy change. However, the non-significant interaction term supports the conclusion that no random changes occurred in the placebo period.
+
+This placebo test strengthens the validity of the original findings, suggesting that the observed policy effect is not due to random fluctuations but rather the actual decriminalization policy implemented in 2021.
+
 ### Regression Discontinuity Analysis
+
+The Regression Discontinuity Analysis aims to further validate the Difference-in-Differences (DiD) results by examining the impact of the Oregon policy change in 2021 on drug-related deaths. By fitting a regression model to estimate the effect of the policy change, we can assess the significance of the increase in deaths following the policy implementation.
 
 ```{r Regression Discontinuity Analysis}
 # Regression Discontinuity Analysis: To further validate the DiD results
@@ -360,7 +399,7 @@ ggplot(Data_RD, aes(x = date, y = Deaths_per_100000, color = as.factor(policy_ch
 
 ```
 
-The regression discontinuity analysis indicates a significant increase in drug-related deaths following Oregon's 2021 decriminalization policy. The model estimates an increase of approximately 15 deaths per 100,000 inhabitants after the policy change, with a highly significant p-value (p < 0.001). This suggests a strong association between the policy and the rise in drug-related deaths. However, the model explains only about 37.86% of the variance in deaths, implying that other factors, such as external events or systemic issues, may also influence these trends. Further analysis is required to account for additional variables.
+The regression discontinuity analysis indicates a significant increase in drug-related deaths following Oregon’s 2021 decriminalization policy. The updated model estimates an increase of approximately 2.25 deaths per 100,000 inhabitants after the policy change, with a highly significant p-value (p < 0.001), reinforcing the strong association between the policy and the rise in drug-related deaths. The model explains approximately 68% of the variance in deaths (R-squared = 0.6795). This suggests that the policy change accounts for a substantial portion of the observed increase in drug-related deaths. However, the remaining variance (about 32%) implies that other factors, such as external events or systemic issues, may still be influencing these trends. The relatively small residual standard error (0.7836) indicates that the model fits the data well, but further analysis is required to account for additional variables and potential long-term impacts of the policy change.
 
 ## Confounding Variables
 
@@ -380,44 +419,11 @@ Socioeconomic factors, such as income levels, employment rates, education, and h
 
 Incorporating socioeconomic data into our analysis could provide a more nuanced understanding of the trends in drug-related deaths. We could use publicly available datasets to obtain state-level indicators of these factors and include them as covariates in our regression models.
 
-### Robustness Checks
-
-To ensure the robustness of our findings,  Placebo tests will be applied by using the Difference-in-Differences (DiD) model to periods before the policy change (e.g., using a fictitious policy change date) to check if similar trends are observed. This helps confirm that the observed effects are not due to random fluctuations. If the placebo test shows no significant impact, it strengthens the validity of the actual policy analysis.
-
-```{r Robustness Checks}
-# Make a Difference-in-Differences model for the years 2018-2020 as a placebo test
-Data_placebo <- Data_monthly %>%
-  filter(date >= as.Date("2018-01-01") & date <= as.Date("2020-12-01"))
-
-# Create 'treatment' and 'post_policy' variables for the placebo test
-Data_placebo <- Data_placebo %>%
-  mutate(
-    treatment = ifelse(`Occurrence State` == "Oregon", 1, 0),  # 1 for Oregon, 0 for California/Washington
-    post_policy = ifelse(year >= 2019, 1, 0),  # 1 for years 2019 and later
-    interaction = treatment * post_policy  # Interaction term for DiD
-  )
-
-# Difference-in-Differences (DiD) model for the placebo test
-did_model_placebo <- lm(Deaths_per_100000 ~ treatment + post_policy + interaction, data = Data_placebo)
-summary(did_model_placebo)
-
-# Robust standard errors for the placebo test
-coeftest(did_model_placebo, vcov = vcovHC(did_model_placebo, type = "HC1"))
-```
-
-The results of the placebo test using a Difference-in-Differences (DiD) model show that the interaction term (policy effect) is not statistically significant (Estimate = 0.59, p = 0.92). This indicates that there is no meaningful effect of the "fictitious" policy change in the pre-treatment period (2018-2020).
-
-The lack of a significant effect in this placebo test suggests that the actual policy change in 2021 is likely responsible for the observed increase in drug-related deaths, as there is no similar effect before the real policy was implemented. Additionally, the model shows that the treatment variable (Oregon) has a significant positive coefficient (Estimate = 20.62, p < 0.001), indicating that Oregon had higher baseline drug-related death rates compared to the control states (California and Washington) even before the policy change. However, the non-significant interaction term supports the conclusion that no random changes occurred in the placebo period.
-
-This placebo test strengthens the validity of the original findings, suggesting that the observed policy effect is not due to random fluctuations but rather the actual decriminalization policy implemented in 2021.
-
-## time-series forecasting (ARIMA) to predict future death trends.
+## Time-series forecasting (ARIMA)
 
 To predict future trends in drug-related deaths, we can use time-series forecasting models such as Autoregressive Integrated Moving Average (ARIMA). By fitting an ARIMA model to the historical data, we can generate forecasts for the upcoming years and assess the potential impact of the policy change on future death rates.
 
 ```{r Time-Series Forecasting ARIMA-2}
-
-
 # Filter the data for Oregon and clean it
 data_oregon <- Data %>%
   filter(`Occurrence State` == "Oregon") %>%
@@ -457,6 +463,70 @@ plot(forecast_2025, main = "Forecast for Drug-Related Deaths in Oregon (2025)",
 
 ```	
 
-While the forecasting model demonstrated reasonable accuracy on the training data (2018-2022), its performance on the test data (2023-2024) highlighted potential shortcomings. The increase in error metrics, particularly RMSE and MAPE, indicates that the model struggles to generalize well to unseen data, reflecting the complexity and potential shifts in drug-related deaths following Oregon's 2021 decriminalization policy. Despite performing better than a naive model (Theil's U of 0.85), the relatively high errors in the test set suggest that further refinements are necessary.
+The ARIMA model was trained on Oregon’s drug-related death data from 2018 to 2022 and validated using 2023 data. In the training set, the model exhibited a small bias, with a Mean Error (ME) of -0.11, indicating a slight underestimation of deaths. The Root Mean Squared Error (RMSE) of 5.32 and Mean Absolute Error (MAE) of 4.34 show moderate accuracy in predicting the actual values, though the model's tendency to under-predict is reflected in the Mean Percentage Error (MPE) of -31.75%. When validated on the 2023 test set, the model's performance slightly worsened, with an RMSE of 8.09 and MAPE of 22.89%, showing the forecasts deviated by an average of 22.89% from the actual data. Despite this, the model outperformed a naive forecast (Theil’s U = 0.85), suggesting that while it provides reasonable accuracy, further refinements are needed to improve predictions, particularly for future periods like 2025.
 
 These results imply that drug-related deaths in Oregon post-2021 may be influenced by factors not fully captured by the model, such as behavioral, societal, or systemic changes induced by the policy. To improve the model's predictive accuracy, additional data, such as socioeconomic variables or more detailed health intervention metrics, and more advanced forecasting techniques, may be needed to capture the full scope of the policy's impact on drug-related deaths in the state.
+
+## Panel Data Analysis 
+
+```{r Panel Data Analysis}
+# Panel Data Analysis
+# Create a panel data set for the analysis
+panel_data <- Data %>%
+  select(`Occurrence State`, Month, Deaths) %>%
+  mutate(State = factor(`Occurrence State`)) %>%
+  select(-`Occurrence State`) %>%
+  rename(Date = Month)
+
+# Convert the Date column to a proper date format
+panel_data$Date <- as.Date(paste0(panel_data$Date, "-01"))
+
+# Aggregate the data to ensure unique state and date combinations
+panel_data <- panel_data %>%
+  group_by(State, Date) %>%
+  summarise(Deaths = sum(Deaths, na.rm = TRUE)) %>%
+  ungroup()
+
+# Convert the data to a pdata.frame
+pdata <- pdata.frame(panel_data, index = c("State", "Date"))
+
+# Fit a panel data model to assess the impact of the policy change
+panel_model <- plm(Deaths ~ lag(Deaths, 1), data = pdata, model = "within")
+
+# Summarize the model
+summary(panel_model)
+
+# Robust standard errors for the panel data model
+coeftest(panel_model, vcov = vcovHC(panel_model, type = "HC1"))
+
+# Extract the index (State, Date) for the fitted model to align with fitted values
+model_index <- index(panel_model)
+
+# Create a dataframe with fitted values and corresponding index (State, Date)
+fitted_data <- data.frame(State = model_index$State,
+                          Date = model_index$Date,
+                          Fitted = fitted(panel_model))
+
+# Merge the fitted data with the original panel_data based on State and Date
+panel_data_with_fitted <- merge(panel_data, fitted_data, by = c("State", "Date"))
+
+# Plot the panel data model results using ggplot2
+ggplot(panel_data_with_fitted, aes(x = Date, y = Deaths, color = State)) +
+  geom_point() +
+  geom_line(aes(y = Deaths), linetype = "solid") +  # Plot actual Deaths as solid line
+  labs(title = "Panel Data Model Results",
+       x = "Date",
+       y = "Deaths",
+       color = "State") +
+  theme_minimal()
+
+        ggplot(panel_data_with_fitted, aes(x = Date, y = Deaths, color = State)) +
+      geom_point() +
+      geom_line(aes(y = Deaths), linetype = "solid") +  # Plot actual Deaths as solid line
+      geom_line(aes(y = Fitted), linetype = "dashed") +  # Plot fitted values as dashed line
+      labs(title = "Panel Data Model Results",
+           x = "Date",
+           y = "Deaths",
+           color = "State") +
+      theme_minimal()
+```
