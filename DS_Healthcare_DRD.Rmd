@@ -561,7 +561,6 @@ To predict future trends in drug-related deaths, we can use time-series forecast
 # Filter the data for Oregon and clean it
 data_oregon <- Data %>%
   filter(`Occurrence State` == "Oregon") %>%
-  filter(!Deaths == "Suppressed") %>%   # Handle suppressed values (remove them for now) 
   mutate(Deaths = as.numeric(Deaths),    # Convert Deaths to numeric
          date = as.Date(paste0(Month, "-01")))  # Create a proper date column
 
