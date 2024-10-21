@@ -31,6 +31,7 @@ library(tidyr)
 library(lmtest)
 library(sandwich)
 library(forecast)
+library(plm)
 
 #globally exclude code chunks from the output
 knitr::opts_chunk$set(echo = FALSE)
@@ -224,7 +225,7 @@ Although the dataset does not include details on socioeconomic factors or the ef
 
 ```{r Baseline and Trend Analysis for drug induced deaths}
 
-# Filter the data for each complete years 2018 to 2023 and make sure to use only durg induced cases
+# Filter the data for each complete years 2018 to 2023
 Data_18_23 <- Data %>%
   filter(`Month` >= ym("2018-01") & `Month` <= ym("2023-12"))
 
@@ -258,6 +259,35 @@ ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occur
        subtitle = "Oregon policy change in 2021",
        x = "Year", y = "Deaths per 100,000 inhabitants")
 ```
+
+## Difference by Gender
+```{r Difference by Gender}
+# Prepare the data
+data_gender_year <- Data %>%
+  select(Gender, Month, Deaths) %>%
+  group_by(Gender, Month) %>%
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE)) %>%
+  ungroup()
+
+# Plot the data
+ggplot(data_gender_year, aes(x = Month, y = Total_Deaths, color = Gender, group = Gender)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Number of Deaths by Gender and Year",
+       x = "Year",
+       y = "Total Deaths",
+       color = "Gender") 
+
+# Perform t-test for significant differences by gender 
+t.test(Total_Deaths ~ Gender, data = data_gender_year)
+
+```
+
+The Welch two-sample t-test results indicate a statistically significant difference in drug-related deaths between males and females. The test produced a t-statistic of -13.287 with 93.404 degrees of freedom and a p-value less than 2.2e-16, which is well below the common significance threshold of 0.05. This strongly suggests that the difference in means between the two groups is not due to random chance.
+
+The mean number of drug-related deaths in the female group is 282.94, while the mean in the male group is significantly higher at 761.59. The 95% confidence interval for the difference in means ranges from -550.18 to -407.12, further confirming that male drug-related deaths are significantly higher than female deaths.
+
+In conclusion, the analysis shows a highly significant difference in drug-related deaths between males and females, with males experiencing a considerably higher number of deaths on average.
 
 # TODO For this Analyis we wanted to look at the monthly numbers
 ## Difference-in-Differences (DiD) Analysis

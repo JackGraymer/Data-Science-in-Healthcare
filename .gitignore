@@ -1,2 +1,4 @@
 #ignore pdf files
 *.pdf
+# ignore DS_Healthcare_DRD_cache folder
+DS_Healthcare_DRD_cache/
