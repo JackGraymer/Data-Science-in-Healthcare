@@ -34,7 +34,7 @@ library(lmtest)
 library(sandwich)
 library(forecast)
 library(plm)
-
+  
 #globally exclude code chunks from the output
 knitr::opts_chunk$set(echo = FALSE)
 
@@ -418,17 +418,22 @@ ggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +
 ```
 
 ```{r Sensitivity Analysis, Correlation Check, and DiD with Alternative Control Groups}
-# Subset data for Oregon and Washington
-oregon_data <- Data_monthly %>% filter(`Occurrence State` == "Oregon")
-washington_data <- Data_monthly %>% filter(`Occurrence State` == "Washington")
+
+# Subset data for Oregon and Washington pre Policy
+oregon_data <- Data_monthly %>% filter(date >= as.Date("2018-01-01") & date <= as.Date("2021-02-01") & `Occurrence State` == "Oregon")
+washington_data <- Data_monthly %>% filter(date >= as.Date("2018-01-01") & date <= as.Date("2021-02-01") & `Occurrence State` == "Washington")
+california_data <- Data_monthly %>% filter(date >= as.Date("2018-01-01") & date <= as.Date("2021-02-01") & `Occurrence State` == "California")
+
+
 
 
 # Calculate the correlation coefficient between the two states
 correlation <- cor(oregon_data$Deaths_per_100000, washington_data$Deaths_per_100000)
+coorelation_c <- cor(oregon_data$Deaths_per_100000, california_data$Deaths_per_100000)
 
 # Print the result
 correlation
-
+coorelation_c
 #Seperate DiD
 
 # Example for DiD with only California as control
@@ -446,9 +451,18 @@ summary(did_model_washington)
 
 
 ```
+**** 
+(new description 22.10)
+We conducted two separate Difference-in-Differences (DiD) models to evaluate the impact of Oregon’s decriminalization policy on drug-related deaths per 100,000 inhabitants, using California and Washington as individual control groups. This approach was motivated by the observed trends: Washington's trend closely follows Oregon’s, while California shows some divergence. Pre-policy correlations confirm that both states are appropriate controls under the parallel trends assumption:
 
-In this analysis, we ran two separate Difference-in-Differences (DiD) models to assess the impact of Oregon’s decriminalization policy on drug-related deaths per 100,000 inhabitants, using California and Washington as individual control groups. This decision was prompted by the discovery of a high correlation (0.95) between drug-related death trends in Oregon and Washington, which raised concerns about whether Washington was an appropriate control.
+Oregon and Washington: Pre-policy correlation of 0.790
+Oregon and California: Pre-policy correlation of 0.750
+Both correlations indicate that Washington and California provide valid benchmarks for assessing the policy’s effect.
+*****
 
+Post Results @Jeanne here 
+
+*(
 The results show markedly different outcomes depending on whether California or Washington is used as the control group:
 
 *Using California as the control*:
@@ -463,7 +477,7 @@ There is no significant pre-treatment difference in drug-related deaths between 
 Both states experienced a significant increase in drug-related deaths following the implementation of the decriminalization policy. However, the lack of a significant interaction effect suggests that the increase was similar in both states.
 
 Given that the law was only implemented in Oregon, we would expect to observe a significant interaction effect if the law had any differential impact on drug-related deaths. The absence of such an interaction implies that the law did not have a measurable effect on drug-related deaths. Instead, the observed increase in drug-related deaths may be attributed to the broader, well-documented drug crisis in the United States.
-
+)*
 
 (((
 
