@@ -322,7 +322,7 @@ ggplot(data_Anova, aes(x = Quarter, y = DrugDeath_Percentage, color = `Occurrenc
   labs(title = "Number of Deaths by Gender and State (Quarterly Data)",
        x = "Year",
        y = "Percentage of Drugdeaths",
-       color = "Gender") 
+       color = "State") 
 
 # Perform ANOVA for significant differences by gender or State
 data_Anova <- data_Anova %>%
@@ -341,8 +341,6 @@ The effect of Occurrence State on drug-related deaths is not significant (F(2, 7
 
 These findings highlight the importance of addressing gender-specific factors in public health initiatives aimed at reducing drug-related deaths. Future research should consider additional variables such as socioeconomic status or access to healthcare services to gain a more comprehensive understanding of the factors influencing drug-related deaths.
 
-
-# TODO For this Analyis we wanted to look at the monthly numbers
 
 ## Difference-in-Differences (DiD) Analysis
 
