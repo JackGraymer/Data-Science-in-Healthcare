@@ -259,7 +259,7 @@ ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occur
   geom_vline(xintercept = 2021, linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Annual Drug-Related Deaths per 100'000 Residents by State",
        subtitle = "Oregon policy change in 2021",
-       x = "Year", y = "") +
+       x = "Year", y = "Deaths per 100'000 Residents") +
    ylim(0, 80)   # Ensure y-axis starts at 0
 
 ```
@@ -296,7 +296,6 @@ The mean number of drug-related deaths in the female group is 299.24, while the 
 In conclusion, the analysis shows a highly significant difference in drug-related deaths between males and females, with males experiencing a considerably higher number of deaths on average.
 
 ```{r Difference by Gender and State before law}
-
 # Prepare the data
 #use quarterly data to make it smoother
 data_Anova <- Data %>%
@@ -406,7 +405,7 @@ ggplot(Data_monthly, aes(x = date, y = Deaths_per_100000, color = `Occurrence St
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Monthly Drug-Related Deaths per 100'000 Residents per State",
        subtitle = "Oregon policy change in February 2021",
-       x = "Year", y = "") +
+       x = "Year", y = "Deaths per 100'000 Residents") +
        ylim(0, 7)
 
 
@@ -419,8 +418,8 @@ ggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Predicted Drug-Related Deaths per 100,000 Over Time",
        subtitle = "Oregon vs Control States",
-       x = "Date", y = "Predicted Deaths per 100,000 inhabitants") + 
-  ylim(0, 7)
+       x = "Year", y = "Predicted Deaths per 100,000 Residents")+
+  ylim(0,7)
 
 ```
 
@@ -488,7 +487,7 @@ summary(pre_trend_model)
 ```
 
 
-### Robustness Check (Placebo Test) *(Maybe Not Needed anymore?)*
+### Robustness Check (Placebo Test) 
 
 To ensure the robustness of our findings,  Placebo tests will be applied by using the Difference-in-Differences (DiD) model to periods before the policy change (e.g., using a fictitious policy change date) to check if similar trends are observed. This helps confirm that the observed effects are not due to random fluctuations. If the placebo test shows no significant impact, it strengthens the validity of the actual policy analysis.
 
@@ -516,9 +515,9 @@ summary(did_model_placebo)
 ggplot(Data_placebo, aes(x = date, y = Deaths_per_100000, color = `Occurrence State`)) +
   geom_line(linewidth = 1.2) +
   geom_vline(xintercept = as.Date("2019-01-01"), linetype = "dashed", color = "red") +  # Mark the placebo policy change
-  labs(title = "Placebo Test: Drug-Related Deaths per 100,000 Inhabitants",
+  labs(title = "Placebo Test: Drug-Related Deaths per 100,000 Residents",
        subtitle = "Fictitious Policy Change in 2019",
-       x = "Year", y = "") + ylim(0, 5)
+       x = "Year", y = "Deaths per 100,000 Residents") + ylim(0, 5)
 
 ```
 
@@ -561,6 +560,8 @@ ggplot(Data_RD, aes(x = date, y = Deaths_per_100000, color = as.factor(policy_ch
        subtitle = "Monthly Drug-Related Deaths per 100'000 Residents per State",
        x = "Date", y = "", 
        color = "Policy Period") +  # Custom legend title
+        ylab("Deaths per 100'000 Residents") +
+        xlab("Year") +
   # Ensure y-axis starts at 0
   ylim(0, 8)
 ```
@@ -592,9 +593,10 @@ arima_model <- auto.arima(train_ts)
 forecast_2023_2024 <- forecast(arima_model, h = 12)
 
 # Plot the forecast against the actual validation data
-plot(forecast_2023_2024)
+plot(forecast_2023_2024, main = "Forecast Training for Drug-Related Deaths in Oregon (2023-2024)",
+     xlab = "Year", ylab = "Deaths per 100,000 Residents") +  ylim(0, 52)
 lines(valid_ts, col = "red")  # Add the actual data for comparison
-legend("topright", legend = c("Forecast", "Actual Data"), col = c("blue", "red"), lty = 1)
+legend("topright", legend = c("Forecast", "Actual Data"), col = c("#2222e7", "red"), lty = 1)
 
 # compute the accuracy of the model
 accuracy(forecast_2023_2024, valid_ts)
@@ -604,78 +606,14 @@ forecast_2025 <- forecast(arima_model, h = 24)
 
 # Plot the forecast for 2025
 plot(forecast_2025, main = "Forecast for Drug-Related Deaths in Oregon (2025)",
-     xlab = "Year", ylab = "Deaths per 100,000 inhabitants")+  ylim(0, 52)
+     xlab = "Year", ylab = "Deaths per 100,000 Residents")+  ylim(0, 52)
 lines(valid_ts, col = "red")  # Add the actual data for comparison
+legend("topright", legend = c("Forecast", "Actual Data"), col = c("#2222e7", "red"), lty = 1)
 ```
 
 The ARIMA model was trained on Oregon’s drug-related death data from 2018 to 2022 and validated using 2023 data. In the training set, the model exhibited a small bias, with a Mean Error (ME) of -0.11, indicating a slight underestimation of deaths. The Root Mean Squared Error (RMSE) of 5.32 and Mean Absolute Error (MAE) of 4.34 show moderate accuracy in predicting the actual values, though the model's tendency to under-predict is reflected in the Mean Percentage Error (MPE) of -31.75%. When validated on the 2023 test set, the model's performance slightly worsened, with an RMSE of 8.09 and MAPE of 22.89%, showing the forecasts deviated by an average of 22.89% from the actual data. Despite this, the model outperformed a naive forecast (Theil’s U = 0.85), suggesting that while it provides reasonable accuracy, further refinements are needed to improve predictions, particularly for future periods like 2025.
 
 These results imply that drug-related deaths in Oregon post-2021 may be influenced by factors not fully captured by the model, such as behavioral, societal, or systemic changes induced by the policy. To improve the model's predictive accuracy, additional data, such as socioeconomic variables or more detailed health intervention metrics, and more advanced forecasting techniques, may be needed to capture the full scope of the policy's impact on drug-related deaths in the state.
-
-## Panel Data Analysis 
-
-```{r Panel Data Analysis}
-# Panel Data Analysis
-# Create a panel data set for the analysis
-panel_data <- Data_monthly %>%
-  select(`Occurrence State`, date, Deaths_per_100000) %>%
-  mutate(State = factor(`Occurrence State`)) %>%
-  select(-`Occurrence State`)
-
-
-# Aggregate the data to ensure unique state and date combinations
-panel_data <- panel_data %>%
-  group_by(State, date) %>%
-  summarise(Deaths_per_100000 = sum(Deaths_per_100000, na.rm = TRUE)) %>%
-  ungroup()
-
-# Convert the data to a pdata.frame
-pdata <- pdata.frame(panel_data, index = c("State", "date"))
-
-# Fit a panel data model to assess the impact of the policy change
-panel_model <- plm(Deaths_per_100000 ~ lag(Deaths_per_100000, 1), data = pdata, model = "within")
-
-# Summarize the model
-summary(panel_model)
-
-# Robust standard errors for the panel data model
-coeftest(panel_model, vcov = vcovHC(panel_model, type = "HC1"))
-
-# Extract the index (State, Date) for the fitted model to align with fitted values
-model_index <- index(panel_model)
-
-# Create a dataframe with fitted values and corresponding index (State, Date)
-fitted_data <- data.frame(State = model_index$State,
-                          date = model_index$date,
-                          Fitted = fitted(panel_model))
-
-# Merge the fitted data with the original panel_data based on State and Date
-panel_data_with_fitted <- merge(panel_data, fitted_data, by = c("State", "date"))
-
-# Plot the panel data model results using ggplot2
-ggplot(panel_data_with_fitted, aes(x = date, y = Deaths_per_100000, color = State)) +
-  geom_point() +
-  geom_line(aes(y = Deaths_per_100000), linetype = "solid") +  # Plot actual Deaths_per_100000 as solid line
-  labs(title = "Panel Data Model Results",
-       x = "Date",
-       y = "Deaths_per_100000",
-       color = "State") +
-  theme_minimal()
-
-        ggplot(panel_data_with_fitted, aes(x = date, y = Deaths_per_100000, color = State)) +
-      geom_point() +
-      geom_line(aes(y = Deaths_per_100000), linetype = "solid") +  # Plot actual Deaths_per_100000 as solid line
-      geom_line(aes(y = Fitted), linetype = "dashed") +  # Plot fitted values as dashed line
-      labs(title = "Panel Data Model Results",
-           x = "date",
-           y = "Deaths_per_100000",
-           color = "State") +
-      theme_minimal()
-```
-
-The panel data analysis provides a comprehensive view of the impact of the policy change on drug-related deaths in Oregon. The model estimates the effect of the policy by comparing the current death rate with the lagged death rate, accounting for state-specific trends and variations. The results show a significant positive coefficient for the lagged death rate, indicating a strong association between past and current death rates. This suggests that the policy change may have influenced the trajectory of drug-related deaths in Oregon, as reflected in the model's predictions.
-
-The fitted values from the panel data model align closely with the actual death rates, indicating that the model effectively captures the underlying patterns in the data. The visual representation of the model results shows the actual death rates (solid lines) and the fitted values (dashed lines) for each state over time. The close alignment between the two lines demonstrates the model's ability to predict the observed trends accurately.
 
 ## Confounding Variables
 
@@ -698,7 +636,7 @@ Incorporating socioeconomic data into our analysis could provide a more nuanced 
 
 # Conclusion
 
-The analysis of drug-related deaths in Oregon before and after the 2021 decriminalization policy change reveals a significant increase in deaths following the policy implementation. The Difference-in-Differences (DiD) analysis, Regression Discontinuity Analysis, and Panel Data Analysis all support the conclusion that the policy change had a measurable impact on drug-related deaths in Oregon. The ARIMA time-series forecasting model provides insights into future trends, highlighting the need for ongoing monitoring and intervention to address the rising death rates.
+The analysis of drug-related deaths in Oregon before and after the 2021 decriminalization policy change reveals a significant increase in deaths following the policy implementation. The Difference-in-Differences (DiD) analysis, Placebo Test and Regression Discontinuity Analysis, all support the conclusion that the policy change had a measurable impact on drug-related deaths in Oregon. The ARIMA time-series forecasting model provides insights into future trends, highlighting the need for ongoing monitoring and intervention to address the rising death rates.
 
 While the results suggest a causal relationship between the policy change and increased deaths, it is essential to consider external factors such as the COVID-19 pandemic and socioeconomic influences that may confound the analysis. By incorporating additional variables and refining the models, future research can provide a more nuanced understanding of the complex dynamics underlying drug-related deaths and inform targeted interventions to mitigate the adverse effects of substance abuse.
 
