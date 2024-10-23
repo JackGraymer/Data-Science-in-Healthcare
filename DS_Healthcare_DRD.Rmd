@@ -509,7 +509,8 @@ ggplot(Data_placebo, aes(x = date, y = Deaths_per_100000, color = `Occurrence St
   geom_vline(xintercept = as.Date("2019-01-01"), linetype = "dashed", color = "red") +  # Mark the placebo policy change
   labs(title = "Placebo Test: Drug-Related Deaths per 100,000 Inhabitants",
        subtitle = "Fictitious Policy Change in 2019",
-       x = "Year", y = "Deaths per 100,000 inhabitants")
+       x = "Year", y = "") + ylim(0, 5)
+
 ```
 
 The placebo test using a Difference-in-Differences (DiD) model was conducted to assess whether a fictitious policy change in 2019 would have influenced drug-related deaths in Oregon, California, and Washington between 2018 and 2020. The results indicate that the interaction term between the treatment group (Oregon) and the placebo policy change is not statistically significant (*Estimate = 0.01277, p = 0.956*), suggesting no meaningful difference in the trend of drug-related deaths between Oregon and the control states (California and Washington) during this period. This lack of a significant effect supports the validity of the original analysis by showing that no artificial policy effect was observed before the actual 2021 policy change.
