@@ -259,7 +259,7 @@ ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occur
   geom_vline(xintercept = 2021, linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Annual Drug-Related Deaths per 100'000 Residents by State",
        subtitle = "Oregon policy change in 2021",
-       x = "Year", y = "Deaths per 100'000 Inhabitants") +
+       x = "Year", y = "Deaths per 100'000 Residents") +
    ylim(0, 80)   # Ensure y-axis starts at 0
 
 ```
@@ -405,7 +405,7 @@ ggplot(Data_monthly, aes(x = date, y = Deaths_per_100000, color = `Occurrence St
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Monthly Drug-Related Deaths per 100'000 Residents per State",
        subtitle = "Oregon policy change in February 2021",
-       x = "Year", y = "Deaths per 100'000 Inhabitants") +
+       x = "Year", y = "Deaths per 100'000 Residents") +
        ylim(0, 7)
 
 
@@ -418,7 +418,7 @@ ggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Predicted Drug-Related Deaths per 100,000 Over Time",
        subtitle = "Oregon vs Control States",
-       x = "Year", y = "Predicted Deaths per 100,000 inhabitants")
+       x = "Year", y = "Predicted Deaths per 100,000 Residents")
 
 ```
 
@@ -503,9 +503,9 @@ summary(did_model_placebo)
 ggplot(Data_placebo, aes(x = date, y = Deaths_per_100000, color = `Occurrence State`)) +
   geom_line(linewidth = 1.2) +
   geom_vline(xintercept = as.Date("2019-01-01"), linetype = "dashed", color = "red") +  # Mark the placebo policy change
-  labs(title = "Placebo Test: Drug-Related Deaths per 100,000 Inhabitants",
+  labs(title = "Placebo Test: Drug-Related Deaths per 100,000 Residents",
        subtitle = "Fictitious Policy Change in 2019",
-       x = "Year", y = "Deaths per 100,000 Inhabitants") + ylim(0, 5)
+       x = "Year", y = "Deaths per 100,000 Residents") + ylim(0, 5)
 
 ```
 
@@ -548,7 +548,7 @@ ggplot(Data_RD, aes(x = date, y = Deaths_per_100000, color = as.factor(policy_ch
        subtitle = "Monthly Drug-Related Deaths per 100'000 Residents per State",
        x = "Date", y = "", 
        color = "Policy Period") +  # Custom legend title
-        ylab("Deaths per 100'000 Inhabitants") +
+        ylab("Deaths per 100'000 Residents") +
         xlab("Year") +
   # Ensure y-axis starts at 0
   ylim(0, 8)
@@ -582,7 +582,7 @@ forecast_2023_2024 <- forecast(arima_model, h = 12)
 
 # Plot the forecast against the actual validation data
 plot(forecast_2023_2024, main = "Forecast Training for Drug-Related Deaths in Oregon (2023-2024)",
-     xlab = "Year", ylab = "Deaths per 100,000 inhabitants") +  ylim(0, 52)
+     xlab = "Year", ylab = "Deaths per 100,000 Residents") +  ylim(0, 52)
 lines(valid_ts, col = "red")  # Add the actual data for comparison
 legend("topright", legend = c("Forecast", "Actual Data"), col = c("#2222e7", "red"), lty = 1)
 
@@ -594,7 +594,7 @@ forecast_2025 <- forecast(arima_model, h = 24)
 
 # Plot the forecast for 2025
 plot(forecast_2025, main = "Forecast for Drug-Related Deaths in Oregon (2025)",
-     xlab = "Year", ylab = "Deaths per 100,000 inhabitants")+  ylim(0, 52)
+     xlab = "Year", ylab = "Deaths per 100,000 Residents")+  ylim(0, 52)
 lines(valid_ts, col = "red")  # Add the actual data for comparison
 legend("topright", legend = c("Forecast", "Actual Data"), col = c("#2222e7", "red"), lty = 1)
 ```
