@@ -451,18 +451,12 @@ summary(did_model_washington)
 
 
 ```
-**** 
-(new description 22.10)
-We conducted two separate Difference-in-Differences (DiD) models to evaluate the impact of Oregon’s decriminalization policy on drug-related deaths per 100,000 inhabitants, using California and Washington as individual control groups. This approach was motivated by the observed trends: Washington's trend closely follows Oregon’s, while California shows some divergence. Pre-policy correlations confirm that both states are appropriate controls under the parallel trends assumption:
+We conducted two separate Difference-in-Differences (DiD) models, using California and Washington as individual control groups. This approach was motivated by the observed trends from the Plot above: Washington's trend closely follows Oregon’s, while California shows some divergence. Pre-policy correlations confirm that both states are appropriate controls under the parallel trends assumption:
 
 Oregon and Washington: Pre-policy correlation of 0.790
 Oregon and California: Pre-policy correlation of 0.750
-Both correlations indicate that Washington and California provide valid benchmarks for assessing the policy’s effect.
-*****
+Both correlations indicate that Washington and California provide reasonable benchmarks for assessing the policy’s effect.
 
-Post Results @Jeanne here 
-
-*(
 The results show markedly different outcomes depending on whether California or Washington is used as the control group:
 
 *Using California as the control*:
@@ -477,20 +471,9 @@ There is no significant pre-treatment difference in drug-related deaths between 
 Both states experienced a significant increase in drug-related deaths following the implementation of the decriminalization policy. However, the lack of a significant interaction effect suggests that the increase was similar in both states.
 
 Given that the law was only implemented in Oregon, we would expect to observe a significant interaction effect if the law had any differential impact on drug-related deaths. The absence of such an interaction implies that the law did not have a measurable effect on drug-related deaths. Instead, the observed increase in drug-related deaths may be attributed to the broader, well-documented drug crisis in the United States.
-)*
-
-(((
-
-The interaction term is not significant, indicating no meaningful difference in the increase of drug-related deaths between Oregon and Washington after the policy. This suggests that Oregon’s policy may not have had a distinct effect when compared to Washington. 
-
-The high correlation between Oregon and Washington suggests that Washington is not an ideal control, as both states followed highly similar pre-policy trends. As a result, using Washington alone as a control underestimates the policy’s effect. On the other hand, using California, which had a different baseline and trend, highlights a significant impact of the policy.
-
-Given these findings, the analysis supports using both California and Washington together as controls to balance the influence of broader national trends (represented by California) with regional factors (represented by Washington).
-
-)))
 
 
-### Robustness Check (Placebo Test) *(Maybe Not Needed anymore)*
+### Robustness Check (Placebo Test) *(Maybe Not Needed anymore?)*
 
 To ensure the robustness of our findings,  Placebo tests will be applied by using the Difference-in-Differences (DiD) model to periods before the policy change (e.g., using a fictitious policy change date) to check if similar trends are observed. This helps confirm that the observed effects are not due to random fluctuations. If the placebo test shows no significant impact, it strengthens the validity of the actual policy analysis.
 
@@ -536,12 +519,9 @@ The Regression Discontinuity Analysis aims to further validate the Difference-in
 ```{r Regression Discontinuity Analysis}
 # Regression Discontinuity Analysis: To further validate the DiD results
 
-# Filter the data for the entire period from 2018 to 2023
-Data_RD <- Data_monthly %>%
-  filter(date >= as.Date("2018-01-01") & date <= as.Date("2023-12-01") & `Occurrence State` == "Oregon")
 
 # Create a binary variable for the policy change
-Data_RD <- Data_RD %>%
+Data_RD <- Data_monthly %>%
   mutate(policy_change = ifelse(date >= as.Date("2021-02-01"), 1, 0))
 
 # Fit a regression model to estimate the effect of the policy change
