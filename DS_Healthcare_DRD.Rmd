@@ -475,7 +475,7 @@ Both states experienced a significant increase in drug-related deaths following 
 Given that the law was only implemented in Oregon, we would expect to observe a significant interaction effect if the law had any differential impact on drug-related deaths. The absence of such an interaction implies that the law did not have a measurable effect on drug-related deaths. Instead, the observed increase in drug-related deaths may be attributed to the broader, well-documented drug crisis in the United States.
 
 
-### Robustness Check (Placebo Test) *(Maybe Not Needed anymore?)*
+### Robustness Check (Placebo Test) 
 
 To ensure the robustness of our findings,  Placebo tests will be applied by using the Difference-in-Differences (DiD) model to periods before the policy change (e.g., using a fictitious policy change date) to check if similar trends are observed. This helps confirm that the observed effects are not due to random fluctuations. If the placebo test shows no significant impact, it strengthens the validity of the actual policy analysis.
 
@@ -624,7 +624,7 @@ Incorporating socioeconomic data into our analysis could provide a more nuanced 
 
 # Conclusion
 
-The analysis of drug-related deaths in Oregon before and after the 2021 decriminalization policy change reveals a significant increase in deaths following the policy implementation. The Difference-in-Differences (DiD) analysis, Regression Discontinuity Analysis, and Panel Data Analysis all support the conclusion that the policy change had a measurable impact on drug-related deaths in Oregon. The ARIMA time-series forecasting model provides insights into future trends, highlighting the need for ongoing monitoring and intervention to address the rising death rates.
+The analysis of drug-related deaths in Oregon before and after the 2021 decriminalization policy change reveals a significant increase in deaths following the policy implementation. The Difference-in-Differences (DiD) analysis, Placebo Test and Regression Discontinuity Analysis, all support the conclusion that the policy change had a measurable impact on drug-related deaths in Oregon. The ARIMA time-series forecasting model provides insights into future trends, highlighting the need for ongoing monitoring and intervention to address the rising death rates.
 
 While the results suggest a causal relationship between the policy change and increased deaths, it is essential to consider external factors such as the COVID-19 pandemic and socioeconomic influences that may confound the analysis. By incorporating additional variables and refining the models, future research can provide a more nuanced understanding of the complex dynamics underlying drug-related deaths and inform targeted interventions to mitigate the adverse effects of substance abuse.
 
