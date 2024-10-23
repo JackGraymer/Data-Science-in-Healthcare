@@ -20,7 +20,7 @@ output:
 ## 3. Exploratory Data Analysis (EDA)
 
 - [x] **Trend Analysis**: Plot the monthly death rates from 2018 to 2024 for each state to visualize trends. This will help spot any visible changes in the death rates over time.
-- [ ] **Identify Baseline Period**: Establish pre-policy change trends (e.g., deaths from 2018–2020 in Oregon before the 2021 decriminalization). Compare these with the post-law period (2021–2024).
+- [x] **Identify Baseline Period**: Establish pre-policy change trends (e.g., deaths from 2018–2020 in Oregon before the 2021 decriminalization). Compare these with the post-law period (2021–2024).
 - [ ] **Correlation Analysis**: Investigate potential relationships between variables (e.g., different states, death rates, and time) using correlation coefficients and scatter plots.
 
 ## 4. Hypothesis Testing and Impact Analysis
