@@ -419,7 +419,8 @@ ggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Predicted Drug-Related Deaths per 100,000 Over Time",
        subtitle = "Oregon vs Control States",
-       x = "Date", y = "Predicted Deaths per 100,000 inhabitants")
+       x = "Date", y = "Predicted Deaths per 100,000 inhabitants") + 
+  ylim(0, 7)
 
 ```
 
