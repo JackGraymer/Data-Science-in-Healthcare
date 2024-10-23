@@ -1,0 +1,8 @@
+"0",""
+"0","# Plot the number of deaths per 10,000 inhabitants for each year and state"
+"0","ggplot(Data_with_population, aes(x = factor(year), y = Drugdeaths, fill = `Occurrence State`)) +"
+"0","  geom_bar(stat = ""identity"", position = ""dodge"") +"
+"0","  labs(title = ""Percentage of Drug-Related Deaths on all Deaths(2018-2023)"","
+"0","       x = ""Year"","
+"0","       y = ""Percentage of Drug-Related Deaths"") +"
+"0","  theme_minimal()"

@@ -1,0 +1,122 @@
+[1mdiff --git a/DS_Healthcare_DRD.Rmd b/DS_Healthcare_DRD.Rmd[m
+[1mindex de4160e..c9c92fe 100644[m
+[1m--- a/DS_Healthcare_DRD.Rmd[m
+[1m+++ b/DS_Healthcare_DRD.Rmd[m
+[36m@@ -419,7 +419,8 @@[m [mggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +[m
+   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change[m
+   labs(title = "Predicted Drug-Related Deaths per 100,000 Over Time",[m
+        subtitle = "Oregon vs Control States",[m
+[31m-       x = "Date", y = "Predicted Deaths per 100,000 inhabitants")[m
+[32m+[m[32m       x = "Date", y = "Predicted Deaths per 100,000 inhabitants") +[m[41m [m
+[32m+[m[32m  ylim(0, 7)[m
+ [m
+ ```[m
+ [m
+[36m@@ -463,20 +464,21 @@[m [mBoth correlations indicate that Washington and California provide reasonable ben[m
+ The results show markedly different outcomes depending on whether California or Washington is used as the control group:[m
+ [m
+ *Using California as the control*:[m
+[31m-The interaction term is highly significant, showing that Oregon experienced a substantial additional increase in drug-related deaths following the policy change relative to California.[m
+[31m-This supports the hypothesis that Oregon’s decriminalization policy had a measurable impact on drug-related deaths.[m
+[32m+[m[32mThe highly significant interaction term indicates that Oregon experienced a substantial additional increase in drug-related deaths following the policy change compared to California. This supports the hypothesis that Oregon’s decriminalization policy had a measurable impact on drug-related deaths.[m
+ [m
+[31m-However, it is important to note that there was a significant pre-treatment difference in drug-related deaths between California and Oregon. This suggests that the observed interaction effect may not solely be attributed to the change in policy (treatment). The pre-existing differences could confound the interpretation of the results, implying that other underlying factors may also play a role in the increase in drug-related deaths.[m
+[32m+[m[32mAlthough there was a significant pre-treatment difference between Oregon and California, California remains a suitable control group due to the sufficiently high pre-policy correlation. The model explains 77% of the variance in the data, demonstrating a strong model fit.[m
+ [m
+ *Using Washington as the control*:[m
+ There is no significant pre-treatment difference in drug-related deaths between Washington and Oregon, which supports the use of Washington as a suitable comparison group for evaluating post-treatment effects.[m
+ [m
+ Both states experienced a significant increase in drug-related deaths following the implementation of the decriminalization policy. However, the lack of a significant interaction effect suggests that the increase was similar in both states.[m
+[32m+[m[32mSince there have also been some changes in Washington, it is better to focus on California as the control.[m
+ [m
+[31m-Given that the law was only implemented in Oregon, we would expect to observe a significant interaction effect if the law had any differential impact on drug-related deaths. The absence of such an interaction implies that the law did not have a measurable effect on drug-related deaths. Instead, the observed increase in drug-related deaths may be attributed to the broader, well-documented drug crisis in the United States.[m
+ [m
+ [m
+[31m-### Robustness Check (Placebo Test) [m
+[32m+[m
+[32m+[m
+[32m+[m[32m### Robustness Check (Placebo Test) *(Maybe Not Needed anymore?)*[m
+ [m
+ To ensure the robustness of our findings,  Placebo tests will be applied by using the Difference-in-Differences (DiD) model to periods before the policy change (e.g., using a fictitious policy change date) to check if similar trends are observed. This helps confirm that the observed effects are not due to random fluctuations. If the placebo test shows no significant impact, it strengthens the validity of the actual policy analysis.[m
+ [m
+[36m@@ -600,6 +602,71 @@[m [mThe ARIMA model was trained on Oregon’s drug-related death data from 2018 to 2[m
+ [m
+ These results imply that drug-related deaths in Oregon post-2021 may be influenced by factors not fully captured by the model, such as behavioral, societal, or systemic changes induced by the policy. To improve the model's predictive accuracy, additional data, such as socioeconomic variables or more detailed health intervention metrics, and more advanced forecasting techniques, may be needed to capture the full scope of the policy's impact on drug-related deaths in the state.[m
+ [m
+[32m+[m[32m## Panel Data Analysis[m[41m [m
+[32m+[m
+[32m+[m[32m```{r Panel Data Analysis}[m
+[32m+[m[32m# Panel Data Analysis[m
+[32m+[m[32m# Create a panel data set for the analysis[m
+[32m+[m[32mpanel_data <- Data_monthly %>%[m
+[32m+[m[32m  select(`Occurrence State`, date, Deaths_per_100000) %>%[m
+[32m+[m[32m  mutate(State = factor(`Occurrence State`)) %>%[m
+[32m+[m[32m  select(-`Occurrence State`)[m
+[32m+[m
+[32m+[m
+[32m+[m[32m# Aggregate the data to ensure unique state and date combinations[m
+[32m+[m[32mpanel_data <- panel_data %>%[m
+[32m+[m[32m  group_by(State, date) %>%[m
+[32m+[m[32m  summarise(Deaths_per_100000 = sum(Deaths_per_100000, na.rm = TRUE)) %>%[m
+[32m+[m[32m  ungroup()[m
+[32m+[m
+[32m+[m[32m# Convert the data to a pdata.frame[m
+[32m+[m[32mpdata <- pdata.frame(panel_data, index = c("State", "date"))[m
+[32m+[m
+[32m+[m[32m# Fit a panel data model to assess the impact of the policy change[m
+[32m+[m[32mpanel_model <- plm(Deaths_per_100000 ~ lag(Deaths_per_100000, 1), data = pdata, model = "within")[m
+[32m+[m
+[32m+[m[32m# Summarize the model[m
+[32m+[m[32msummary(panel_model)[m
+[32m+[m
+[32m+[m[32m# Robust standard errors for the panel data model[m
+[32m+[m[32mcoeftest(panel_model, vcov = vcovHC(panel_model, type = "HC1"))[m
+[32m+[m
+[32m+[m[32m# Extract the index (State, Date) for the fitted model to align with fitted values[m
+[32m+[m[32mmodel_index <- index(panel_model)[m
+[32m+[m
+[32m+[m[32m# Create a dataframe with fitted values and corresponding index (State, Date)[m
+[32m+[m[32mfitted_data <- data.frame(State = model_index$State,[m
+[32m+[m[32m                          date = model_index$date,[m
+[32m+[m[32m                          Fitted = fitted(panel_model))[m
+[32m+[m
+[32m+[m[32m# Merge the fitted data with the original panel_data based on State and Date[m
+[32m+[m[32mpanel_data_with_fitted <- merge(panel_data, fitted_data, by = c("State", "date"))[m
+[32m+[m
+[32m+[m[32m# Plot the panel data model results using ggplot2[m
+[32m+[m[32mggplot(panel_data_with_fitted, aes(x = date, y = Deaths_per_100000, color = State)) +[m
+[32m+[m[32m  geom_point() +[m
+[32m+[m[32m  geom_line(aes(y = Deaths_per_100000), linetype = "solid") +  # Plot actual Deaths_per_100000 as solid line[m
+[32m+[m[32m  labs(title = "Panel Data Model Results",[m
+[32m+[m[32m       x = "Date",[m
+[32m+[m[32m       y = "Deaths_per_100000",[m
+[32m+[m[32m       color = "State") +[m
+[32m+[m[32m  theme_minimal()[m
+[32m+[m
+[32m+[m[32m        ggplot(panel_data_with_fitted, aes(x = date, y = Deaths_per_100000, color = State)) +[m
+[32m+[m[32m      geom_point() +[m
+[32m+[m[32m      geom_line(aes(y = Deaths_per_100000), linetype = "solid") +  # Plot actual Deaths_per_100000 as solid line[m
+[32m+[m[32m      geom_line(aes(y = Fitted), linetype = "dashed") +  # Plot fitted values as dashed line[m
+[32m+[m[32m      labs(title = "Panel Data Model Results",[m
+[32m+[m[32m           x = "date",[m
+[32m+[m[32m           y = "Deaths_per_100000",[m
+[32m+[m[32m           color = "State") +[m
+[32m+[m[32m      theme_minimal()[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32mThe panel data analysis provides a comprehensive view of the impact of the policy change on drug-related deaths in Oregon. The model estimates the effect of the policy by comparing the current death rate with the lagged death rate, accounting for state-specific trends and variations. The results show a significant positive coefficient for the lagged death rate, indicating a strong association between past and current death rates. This suggests that the policy change may have influenced the trajectory of drug-related deaths in Oregon, as reflected in the model's predictions.[m
+[32m+[m
+[32m+[m[32mThe fitted values from the panel data model align closely with the actual death rates, indicating that the model effectively captures the underlying patterns in the data. The visual representation of the model results shows the actual death rates (solid lines) and the fitted values (dashed lines) for each state over time. The close alignment between the two lines demonstrates the model's ability to predict the observed trends accurately.[m
+[32m+[m
+ ## Confounding Variables[m
+ [m
+ ### External Factors[m
+[36m@@ -621,7 +688,7 @@[m [mIncorporating socioeconomic data into our analysis could provide a more nuanced[m
+ [m
+ # Conclusion[m
+ [m
+[31m-The analysis of drug-related deaths in Oregon before and after the 2021 decriminalization policy change reveals a significant increase in deaths following the policy implementation. The Difference-in-Differences (DiD) analysis, Placebo Test and Regression Discontinuity Analysis, all support the conclusion that the policy change had a measurable impact on drug-related deaths in Oregon. The ARIMA time-series forecasting model provides insights into future trends, highlighting the need for ongoing monitoring and intervention to address the rising death rates.[m
+[32m+[m[32mThe analysis of drug-related deaths in Oregon before and after the 2021 decriminalization policy change reveals a significant increase in deaths following the policy implementation. The Difference-in-Differences (DiD) analysis, Regression Discontinuity Analysis, and Panel Data Analysis all support the conclusion that the policy change had a measurable impact on drug-related deaths in Oregon. The ARIMA time-series forecasting model provides insights into future trends, highlighting the need for ongoing monitoring and intervention to address the rising death rates.[m
+ [m
+ While the results suggest a causal relationship between the policy change and increased deaths, it is essential to consider external factors such as the COVID-19 pandemic and socioeconomic influences that may confound the analysis. By incorporating additional variables and refining the models, future research can provide a more nuanced understanding of the complex dynamics underlying drug-related deaths and inform targeted interventions to mitigate the adverse effects of substance abuse.[m
+ [m

@@ -1,0 +1,6 @@
+"0","# load the relevant part of the Data set, exclude notes starting from row 4374"
+"0","Data <- read_excel(""data/Drug_related_Deaths_2018-2024.xlsx"", n_max = 4374)"
+"0",""
+"0",""
+"0","# Overview for the Data"
+"0","head(Data, 10)"

@@ -1,0 +1,131 @@
+"0","# Read population data from Excel file for each region"
+"0",""
+"0","# Load the population data from the first range (D244:M244)"
+"0","population_oregon_1 <- read_excel(""data/Ca_Or_Wa Population 2010-23.xlsx"", "
+"0","                                  sheet = ""Oregon"", "
+"0","                                  range = ""D244:M244"", "
+"0","                                  col_names = FALSE)  "
+"1","[38;5;232mNew names:
+[36m•[38;5;232m `` -> `...1`
+[36m•[38;5;232m `` -> `...2`
+[36m•[38;5;232m `` -> `...3`
+[36m•[38;5;232m `` -> `...4`
+[36m•[38;5;232m `` -> `...5`
+[36m•[38;5;232m `` -> `...6`
+[36m•[38;5;232m `` -> `...7`
+[36m•[38;5;232m `` -> `...8`
+[36m•[38;5;232m `` -> `...9`
+[36m•[38;5;232m `` -> `...10`[39m
+"
+"0","# Load the population data from the second range (Q244:T244)"
+"0","population_oregon_2 <- read_excel(""data/Ca_Or_Wa Population 2010-23.xlsx"", "
+"0","                                  sheet = ""Oregon"", "
+"0","                                  range = ""Q244:T244"", "
+"0","                                  col_names = FALSE)  "
+"1","[38;5;232mNew names:
+[36m•[38;5;232m `` -> `...1`
+[36m•[38;5;232m `` -> `...2`
+[36m•[38;5;232m `` -> `...3`
+[36m•[38;5;232m `` -> `...4`[39m
+"
+"0","# Combine the two data frames (horizontally) into one row"
+"0","population_oregon <- cbind(population_oregon_1, population_oregon_2)"
+"0",""
+"0","# Manually set the column names (years 2010 to 2023)"
+"0","colnames(population_oregon) <- 2010:2023"
+"0",""
+"0",""
+"0",""
+"0","# Load the population data from the first range in California"
+"0","population_california_1 <- read_excel(""data/Ca_Or_Wa Population 2010-23.xlsx"", "
+"0","                                  sheet = ""California"", "
+"0","                                  range = ""D487:M487"", "
+"0","                                  col_names = FALSE)  "
+"1","[38;5;232mNew names:
+[36m•[38;5;232m `` -> `...1`
+[36m•[38;5;232m `` -> `...2`
+[36m•[38;5;232m `` -> `...3`
+[36m•[38;5;232m `` -> `...4`
+[36m•[38;5;232m `` -> `...5`
+[36m•[38;5;232m `` -> `...6`
+[36m•[38;5;232m `` -> `...7`
+[36m•[38;5;232m `` -> `...8`
+[36m•[38;5;232m `` -> `...9`
+[36m•[38;5;232m `` -> `...10`[39m
+"
+"0","# Load the population data from the second range (Q487:T487)"
+"0","population_california_2 <- read_excel(""data/Ca_Or_Wa Population 2010-23.xlsx"", "
+"0","                                  sheet = ""California"", "
+"0","                                  range = ""Q487:T487"", "
+"0","                                  col_names = FALSE)  "
+"1","[38;5;232mNew names:
+[36m•[38;5;232m `` -> `...1`
+[36m•[38;5;232m `` -> `...2`
+[36m•[38;5;232m `` -> `...3`
+[36m•[38;5;232m `` -> `...4`[39m
+"
+"0","# Combine the two data frames (horizontally) into one row"
+"0","population_california <- cbind(population_california_1, population_california_2)"
+"0",""
+"0","# Manually set the column names (years 2010 to 2023)"
+"0","colnames(population_california) <- 2010:2023"
+"0",""
+"0",""
+"0",""
+"0","# Load the population data from the first range in Washington"
+"0","population_washington_1 <- read_excel(""data/Ca_Or_Wa Population 2010-23.xlsx"", "
+"0","                                  sheet = ""Washington"", "
+"0","                                  range = ""D286:M286"", "
+"0","                                  col_names = FALSE)  "
+"1","[38;5;232mNew names:
+[36m•[38;5;232m `` -> `...1`
+[36m•[38;5;232m `` -> `...2`
+[36m•[38;5;232m `` -> `...3`
+[36m•[38;5;232m `` -> `...4`
+[36m•[38;5;232m `` -> `...5`
+[36m•[38;5;232m `` -> `...6`
+[36m•[38;5;232m `` -> `...7`
+[36m•[38;5;232m `` -> `...8`
+[36m•[38;5;232m `` -> `...9`
+[36m•[38;5;232m `` -> `...10`[39m
+"
+"0","# Load the population data from the second range "
+"0","population_washington_2 <- read_excel(""data/Ca_Or_Wa Population 2010-23.xlsx"", "
+"0","                                  sheet = ""Washington"", "
+"0","                                  range = ""Q286:T286"", "
+"0","                                  col_names = FALSE)  "
+"1","[38;5;232mNew names:
+[36m•[38;5;232m `` -> `...1`
+[36m•[38;5;232m `` -> `...2`
+[36m•[38;5;232m `` -> `...3`
+[36m•[38;5;232m `` -> `...4`[39m
+"
+"0","# Combine the two data frames (horizontally) into one row"
+"0","population_washington <- cbind(population_washington_1, population_washington_2)"
+"0",""
+"0","# Manually set the column names (years 2010 to 2023)"
+"0","colnames(population_washington) <- 2010:2023"
+"0",""
+"0",""
+"0","# Combine population data into a single data frame with an added column for state"
+"0","population_data <- bind_rows("
+"0","  population_oregon %>% mutate(State = ""Oregon""),"
+"0","  population_washington %>% mutate(State = ""Washington""),"
+"0","  population_california %>% mutate(State = ""California"")"
+"0",")"
+"0",""
+"0",""
+"0","# Remove the temporary variables from the environment"
+"0","rm(population_oregon_1, population_oregon_2, population_washington_1, "
+"0","   population_washington_2, population_california_1, population_california_2,"
+"0","   population_oregon, population_washington, population_california)"
+"0",""
+"0","# Convert wide format to long format"
+"0","population_data <- population_data %>%"
+"0","  pivot_longer(cols = -State,    # All columns except 'State'"
+"0","               names_to = ""year"",   # The new column for years"
+"0","               values_to = ""population_count"")  # The new column for population counts"
+"0",""
+"0","#Convert year column to numeric"
+"0","population_data$year <- as.numeric(population_data$year)  "
+"0",""

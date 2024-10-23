@@ -1,0 +1,92 @@
+library(readxl)
+library(dplyr)
+library(zoo)
+library(ggplot2)
+library(lubridate)
+
+Data <- read_excel("C:/Users/Jeanne Kunz/OneDrive/Desktop/HSLU/DS in Healthcare/Project/Drug_related_Deaths_2018-2024.xlsx")
+# Data <- read_excel("C:/Users/Jeanne Kunz/Downloads/Drug_related_Deaths_2018-2024.xlsx")
+View(Drug_related_Deaths_2018_2024)
+
+# Overview for the Data
+head(Data, 10)
+str(Data)
+
+# look into Notes
+unique(Data$Notes)
+
+# only NA's so we delete this column
+Data <- Data %>% select(-Notes)
+
+# look into Dates
+unique(Data$Month)
+
+# Delete Row Sep., 2024 since the data is not complete
+Data <- Data[Data$Month != "Sep., 2024 (provisional and partial)", ]
+
+# Create column Provisional (TRUE/FALSE) based on the col Month '(provisional)'
+Data$Provisional <- grepl("\\(provisional\\)", Data$Month)
+
+# Delete " (provisional)" from the Date
+Data$Month <- gsub(" \\(provisional\\)", "", Data$Month)
+
+# Dates are formated different (with or without dots/ spaces), so we work with Month Code and format it into Date
+Data$`Month Code` <- as.yearmon(Data$`Month Code`, format = "%Y/%m")
+Data$Month <- Data$`Month Code`
+
+# look into Deaths
+Data$Deaths
+
+# Some of the numbers are "Suppressed" this means that there are between 1 and 9 cases
+# To use Deaths as a number we can leave them as NA's or substitute by a random number between 1 and 9
+
+# Set seed for reproducibility if needed
+set.seed(23)  
+
+# Replace "Suppressed" in the Death column with a random number between 1 and 9
+Data$Deaths <- ifelse(Data$Deaths == "Suppressed", sample(1:9, sum(Data$Deaths == "Suppressed"), replace = TRUE), Data$Deaths)
+Data$Deaths <- as.numeric(Data$Deaths)
+
+# Delete all columns that end on Code, they are duplicates of the other columns
+Data <- Data[, !grepl("Code$", names(Data))]
+
+# Quality of Data from 2024 is not sufficient yet (delete)
+Data <- Data %>% filter(Month < as.yearmon("2024-01-01"))
+
+# 
+Data %>%
+  filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes") %>%
+  group_by(Month, `Occurrence State`) %>% 
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%  # Sum of Death per Month and State
+  ggplot(aes(x = Month, y = Total_Deaths, color = `Occurrence State`)) +
+  geom_line()
+
+Data %>%
+  filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes") %>%
+  group_by(Month, `Occurrence State`, Gender) %>%  # Add Gender to the grouping
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%
+  ggplot(aes(x = Month, y = Total_Deaths, linetype = Gender, color = `Occurrence State`, group = interaction(`Occurrence State`, Gender)) ) +  # Differentiate by Gender and Occurrence State
+  geom_line() +
+  labs(linetype = "Gender", color = "Occurrence State")
+
+Data %>%
+  filter(`Occurrence State` == "Oregon", 
+         `UCD - Drug/Alcohol Induced` != "Data not shown due to 6 month lag to account for delays in death certificate completion for certain causes of death." ) %>%
+  group_by(Month, `UCD - Drug/Alcohol Induced`) %>% 
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%  # Sum of Death per Month and State
+  ggplot(aes(x = Month, y = Total_Deaths, color = `UCD - Drug/Alcohol Induced`)) +
+  geom_line()+
+  scale_y_log10()
+
+# Quarterly Data (smoother)
+Data %>%
+  filter(`UCD - Drug/Alcohol Induced` == "Drug-induced causes") %>% 
+  mutate(Quarter = floor_date(as.Date(Month), "quarter")) %>%  # Create a Quarter variable
+  group_by(Quarter, `Occurrence State`) %>%  # Group by Quarter and Occurrence State
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE), .groups = 'drop') %>%
+  ggplot(aes(x = Quarter, y = Total_Deaths, color = `Occurrence State`, group = `Occurrence State`)) +  # Color by Occurrence State
+  geom_line() +
+  labs(x = "Quarter", y = "Total Deaths") 
+
+
+

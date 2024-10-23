@@ -1,0 +1,28 @@
+{
+    "id": "2AE919AB",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1729535344322.0,
+    "source_on_save": false,
+    "relative_order": 6,
+    "properties": {
+        "id": "c0d2aa2dcd7c4730a1422e7654964261",
+        "name": "anova_model",
+        "title": "anova_model",
+        "language": "R",
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2314885530450141744,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1729535344322,
+    "read_only": false,
+    "read_only_alternatives": []
+}
