@@ -407,7 +407,7 @@ ggplot(Data_monthly, aes(x = date, y = Deaths_per_100000, color = `Occurrence St
   labs(title = "Monthly Drug-Related Deaths per 100'000 Residents per State",
        subtitle = "Oregon policy change in February 2021",
        x = "Year", y = "") +
-       ylim(0, 5)
+       ylim(0, 7)
 
 
 # Generate predicted values based on the model
