@@ -248,7 +248,7 @@ Data_with_population <- Data_with_population %>%
 # Plot the number of deaths per 10,000 inhabitants for each year and state
 ggplot(Data_with_population, aes(x = factor(year), y = Deaths_per_100000, fill = `Occurrence State`)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Drug-Related Deaths per 100,000 Residents by State (2018-2023)",
+  labs(title = "Annual Drug-Related Deaths per 100,000 Residents by State (2018-2023)",
        x = "Year",
        y = "Deaths per 100'000 Inhabitants")
 
@@ -257,9 +257,9 @@ ggplot(Data_with_population, aes(x = factor(year), y = Deaths_per_100000, fill =
 ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occurrence State`)) +
   geom_line(linewidth = 1.2) +
   geom_vline(xintercept = 2021, linetype = "dashed", color = "red") +  # Mark the policy change
-  labs(title = "Drug-Related Deaths per 100,000 Residents by State",
+  labs(title = "Annual Drug-Related Deaths per 100'000 Residents by State",
        subtitle = "Oregon policy change in 2021",
-       x = "Year", y = "Deaths per 100,000 inhabitants") +
+       x = "Year", y = "") +
    ylim(0, 80)   # Ensure y-axis starts at 0
 
 ```
@@ -325,7 +325,8 @@ ggplot(data_Anova, aes(x = Quarter, y = DrugDeath_Percentage, color = `Occurrenc
   labs(title = "Number of Deaths by Gender and State (Quarterly Data)",
        x = "Year",
        y = "Percentage of Drugdeaths",
-       color = "State") 
+       color = "State") +
+        ylim(0, 5) 
 
 # Perform ANOVA for significant differences by gender or State
 data_Anova <- data_Anova %>%
@@ -403,9 +404,9 @@ The **interaction term**, which captures the policy effect in Oregon relative to
 ggplot(Data_monthly, aes(x = date, y = Deaths_per_100000, color = `Occurrence State`)) +
   geom_line(linewidth = 1.2) +
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
-  labs(title = "Drug-Related Deaths by State per 100'000",
+  labs(title = "Monthly Drug-Related Deaths per 100'000 Residents per State",
        subtitle = "Oregon policy change in February 2021",
-       x = "Year", y = "Deaths per 100'000") +
+       x = "Year", y = "") +
        ylim(0, 5)
 
 
@@ -536,15 +537,24 @@ summary(rd_model)
 # Robust standard errors to handle heteroscedasticity
 coeftest(rd_model, vcov = vcovHC(rd_model, type = "HC1"))
 
+
 # Plot the regression discontinuity analysis
 ggplot(Data_RD, aes(x = date, y = Deaths_per_100000, color = as.factor(policy_change))) +
-  geom_line(linewidth = 1.2) +
+  geom_line(linewidth = 1) +
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
-  # Legend
+  
+  # Custom color for before and after policy
   scale_color_manual(values = c("0" = "blue", "1" = "red"), labels = c("Before Policy", "After Policy")) +
+  
+  # Custom labels and title
   labs(title = "Regression Discontinuity Analysis",
-       subtitle = "Effect of Oregon Policy Change in 2021 (Oregon Only)",
-       x = "Date", y = "Deaths per 100,000 inhabitants")
+       subtitle = "Monthly Drug-Related Deaths per 100'000 Residents per State",
+       x = "Date", y = "", 
+       color = "Policy Period") +  # Custom legend title
+  # Ensure y-axis starts at 0
+  ylim(0, 8)
+
+
 
 ```
 
@@ -589,7 +599,7 @@ forecast_2025 <- forecast(full_arima_model, h = 12)
 
 # Plot the forecast for 2025
 plot(forecast_2025, main = "Forecast for Drug-Related Deaths in Oregon (2025)",
-     xlab = "Year", ylab = "Deaths per 100,000 inhabitants")
+     xlab = "Year", ylab = "Deaths per 100,000 inhabitants")+  ylim(0, 52)
 
 ```
 
