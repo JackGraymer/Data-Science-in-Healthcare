@@ -453,9 +453,6 @@ did_model_washington <- lm(Deaths_per_100000 ~ treatment + post_policy + interac
 # Compare the results
 summary(did_model_california)
 summary(did_model_washington)
-
-
-
 ```
 We conducted two separate Difference-in-Differences (DiD) models, using California and Washington as individual control groups. This approach was motivated by the observed trends from the Plot above: Washington's trend closely follows Oregon’s, while California shows some divergence. Pre-policy correlations confirm that both states are appropriate controls under the parallel trends assumption:
 
@@ -553,9 +550,6 @@ ggplot(Data_RD, aes(x = date, y = Deaths_per_100000, color = as.factor(policy_ch
        color = "Policy Period") +  # Custom legend title
   # Ensure y-axis starts at 0
   ylim(0, 8)
-
-
-
 ```
 
 The regression discontinuity analysis indicates a significant increase in drug-related deaths following Oregon’s 2021 decriminalization policy. The updated model estimates an increase of approximately 2.25 deaths per 100,000 inhabitants after the policy change, with a highly significant p-value (p < 0.001), reinforcing the strong association between the policy and the rise in drug-related deaths. The model explains approximately 68% of the variance in deaths (R-squared = 0.6795). This suggests that the policy change accounts for a substantial portion of the observed increase in drug-related deaths. However, the remaining variance (about 32%) implies that other factors, such as external events or systemic issues, may still be influencing these trends. The relatively small residual standard error (0.7836) indicates that the model fits the data well, but further analysis is required to account for additional variables and potential long-term impacts of the policy change.
@@ -577,11 +571,9 @@ ts_oregon <- ts(data_oregon$Deaths, start = c(2018, 1), frequency = 12)
 # Split the data for training (2018-2022) and validation (2023)
 train_ts <- window(ts_oregon, end = c(2022, 12))
 valid_ts <- window(ts_oregon, start = c(2023, 1), end = c(2023, 12))
-full_train_ts <- window(ts_oregon, end = c(2023, 12))
 
 # Fit an ARIMA model (or other model)
 arima_model <- auto.arima(train_ts)
-full_arima_model <- auto.arima(full_train_ts)
 
 # Forecast for the validation period (2023-2024)
 forecast_2023_2024 <- forecast(arima_model, h = 12)
@@ -595,12 +587,12 @@ legend("topright", legend = c("Forecast", "Actual Data"), col = c("blue", "red")
 accuracy(forecast_2023_2024, valid_ts)
 
 # After validating the model, forecast for 2025
-forecast_2025 <- forecast(full_arima_model, h = 12)
+forecast_2025 <- forecast(arima_model, h = 24)
 
 # Plot the forecast for 2025
 plot(forecast_2025, main = "Forecast for Drug-Related Deaths in Oregon (2025)",
      xlab = "Year", ylab = "Deaths per 100,000 inhabitants")+  ylim(0, 52)
-
+lines(valid_ts, col = "red")  # Add the actual data for comparison
 ```
 
 The ARIMA model was trained on Oregon’s drug-related death data from 2018 to 2022 and validated using 2023 data. In the training set, the model exhibited a small bias, with a Mean Error (ME) of -0.11, indicating a slight underestimation of deaths. The Root Mean Squared Error (RMSE) of 5.32 and Mean Absolute Error (MAE) of 4.34 show moderate accuracy in predicting the actual values, though the model's tendency to under-predict is reflected in the Mean Percentage Error (MPE) of -31.75%. When validated on the 2023 test set, the model's performance slightly worsened, with an RMSE of 8.09 and MAPE of 22.89%, showing the forecasts deviated by an average of 22.89% from the actual data. Despite this, the model outperformed a naive forecast (Theil’s U = 0.85), suggesting that while it provides reasonable accuracy, further refinements are needed to improve predictions, particularly for future periods like 2025.
