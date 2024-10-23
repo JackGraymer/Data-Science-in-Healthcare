@@ -259,7 +259,7 @@ ggplot(Data_with_population, aes(x = year, y = Deaths_per_100000, color = `Occur
   geom_vline(xintercept = 2021, linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Annual Drug-Related Deaths per 100'000 Residents by State",
        subtitle = "Oregon policy change in 2021",
-       x = "Year", y = "") +
+       x = "Year", y = "Deaths per 100'000 Inhabitants") +
    ylim(0, 80)   # Ensure y-axis starts at 0
 
 ```
@@ -296,7 +296,6 @@ The mean number of drug-related deaths in the female group is 299.24, while the 
 In conclusion, the analysis shows a highly significant difference in drug-related deaths between males and females, with males experiencing a considerably higher number of deaths on average.
 
 ```{r Difference by Gender and State before law}
-
 # Prepare the data
 #use quarterly data to make it smoother
 data_Anova <- Data %>%
@@ -406,7 +405,7 @@ ggplot(Data_monthly, aes(x = date, y = Deaths_per_100000, color = `Occurrence St
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Monthly Drug-Related Deaths per 100'000 Residents per State",
        subtitle = "Oregon policy change in February 2021",
-       x = "Year", y = "") +
+       x = "Year", y = "Deaths per 100'000 Inhabitants") +
        ylim(0, 7)
 
 
@@ -419,7 +418,7 @@ ggplot(Data_monthly, aes(x = date, y = predicted, color = `Occurrence State`)) +
   geom_vline(xintercept = as.Date("2021-02-01"), linetype = "dashed", color = "red") +  # Mark the policy change
   labs(title = "Predicted Drug-Related Deaths per 100,000 Over Time",
        subtitle = "Oregon vs Control States",
-       x = "Date", y = "Predicted Deaths per 100,000 inhabitants")
+       x = "Year", y = "Predicted Deaths per 100,000 inhabitants")
 
 ```
 
@@ -506,7 +505,7 @@ ggplot(Data_placebo, aes(x = date, y = Deaths_per_100000, color = `Occurrence St
   geom_vline(xintercept = as.Date("2019-01-01"), linetype = "dashed", color = "red") +  # Mark the placebo policy change
   labs(title = "Placebo Test: Drug-Related Deaths per 100,000 Inhabitants",
        subtitle = "Fictitious Policy Change in 2019",
-       x = "Year", y = "") + ylim(0, 5)
+       x = "Year", y = "Deaths per 100,000 Inhabitants") + ylim(0, 5)
 
 ```
 
@@ -549,6 +548,8 @@ ggplot(Data_RD, aes(x = date, y = Deaths_per_100000, color = as.factor(policy_ch
        subtitle = "Monthly Drug-Related Deaths per 100'000 Residents per State",
        x = "Date", y = "", 
        color = "Policy Period") +  # Custom legend title
+        ylab("Deaths per 100'000 Inhabitants") +
+        xlab("Year") +
   # Ensure y-axis starts at 0
   ylim(0, 8)
 ```
@@ -580,9 +581,10 @@ arima_model <- auto.arima(train_ts)
 forecast_2023_2024 <- forecast(arima_model, h = 12)
 
 # Plot the forecast against the actual validation data
-plot(forecast_2023_2024)
+plot(forecast_2023_2024, main = "Forecast Training for Drug-Related Deaths in Oregon (2023-2024)",
+     xlab = "Year", ylab = "Deaths per 100,000 inhabitants") +  ylim(0, 52)
 lines(valid_ts, col = "red")  # Add the actual data for comparison
-legend("topright", legend = c("Forecast", "Actual Data"), col = c("blue", "red"), lty = 1)
+legend("topright", legend = c("Forecast", "Actual Data"), col = c("#2222e7", "red"), lty = 1)
 
 # compute the accuracy of the model
 accuracy(forecast_2023_2024, valid_ts)
@@ -594,6 +596,7 @@ forecast_2025 <- forecast(arima_model, h = 24)
 plot(forecast_2025, main = "Forecast for Drug-Related Deaths in Oregon (2025)",
      xlab = "Year", ylab = "Deaths per 100,000 inhabitants")+  ylim(0, 52)
 lines(valid_ts, col = "red")  # Add the actual data for comparison
+legend("topright", legend = c("Forecast", "Actual Data"), col = c("#2222e7", "red"), lty = 1)
 ```
 
 The ARIMA model was trained on Oregon’s drug-related death data from 2018 to 2022 and validated using 2023 data. In the training set, the model exhibited a small bias, with a Mean Error (ME) of -0.11, indicating a slight underestimation of deaths. The Root Mean Squared Error (RMSE) of 5.32 and Mean Absolute Error (MAE) of 4.34 show moderate accuracy in predicting the actual values, though the model's tendency to under-predict is reflected in the Mean Percentage Error (MPE) of -31.75%. When validated on the 2023 test set, the model's performance slightly worsened, with an RMSE of 8.09 and MAPE of 22.89%, showing the forecasts deviated by an average of 22.89% from the actual data. Despite this, the model outperformed a naive forecast (Theil’s U = 0.85), suggesting that while it provides reasonable accuracy, further refinements are needed to improve predictions, particularly for future periods like 2025.
