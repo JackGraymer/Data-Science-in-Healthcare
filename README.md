@@ -1,4 +1,4 @@
-# Data-Science-in-Healthcare
+# Data-Science-in-Healthcare HSLU
 
 library(readxl)
 library(dplyr)
